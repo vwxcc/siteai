@@ -3,6 +3,7 @@ import db from "../database/db.js";
 import { auth } from "../middleware/auth.js";
 import { sendToAI } from "../services/ai.js";
 import multer from "multer";
+import { processUploadedFile } from "../services/fileProcessor.js";
 
 const router = express.Router();
 
@@ -292,65 +293,91 @@ router.post(
         );
 
         // --------------------------------------------------------
-        // Формируем содержимое прикреплённых файлов
+        // Обрабатываем прикреплённые файлы
+        // --------------------------------------------------------
+
+        const processedFiles = [];
+
+        for (const file of files) {
+            const processed =
+                await processUploadedFile(file);
+
+            processedFiles.push(processed);
+
+            // Сохраняем информацию о файле в БД
+            db.prepare(`
+                INSERT INTO message_files
+                (
+                    message_id,
+                    original_name,
+                    stored_name,
+                    mime_type,
+                    file_size,
+                    file_type,
+                    stored_path,
+                    extracted_text,
+                    processing_status
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `).run(
+                userMessageId,
+                processed.originalName,
+                processed.storedName,
+                processed.mimeType,
+                processed.size,
+                processed.fileType,
+                processed.storedPath,
+                processed.extractedText,
+                processed.processingStatus
+            );
+        }
+
+        // --------------------------------------------------------
+        // Формируем содержимое файлов для AI
         // --------------------------------------------------------
 
         const fileParts = [];
 
-        for (const file of files) {
+        for (let i = 0; i < files.length; i++) {
+            const originalFile = files[i];
+            const processed = processedFiles[i];
 
-            const name =
-                file.originalname || "файл";
+            const mimeType =
+                processed.mimeType ||
+                originalFile.mimetype ||
+                "application/octet-stream";
 
-            const type =
-                file.mimetype || "application/octet-stream";
-
-            const lowerName =
-                name.toLowerCase();
-
-            const isImage =
-                type.startsWith("image/");
-
-            const isText =
-                type.startsWith("text/") ||
-                /\.(txt|md|csv|json|js|ts|jsx|tsx|py|java|c|cpp|h|hpp|css|html|xml|yaml|yml|sql|sh|log)$/i
-                    .test(lowerName);
-
-            if (isImage) {
-
+            // Изображения передаём как изображение.
+            // Это позволит vision-модели анализировать
+            // фотографии, скриншоты, таблицы и т. д.
+            if (mimeType.startsWith("image/")) {
                 const base64 =
-                    file.buffer.toString("base64");
+                    originalFile.buffer.toString("base64");
 
                 fileParts.push({
                     type: "image_url",
                     image_url: {
                         url:
-                            `data:${type};base64,${base64}`
+                            `data:${mimeType};base64,${base64}`
                     }
                 });
 
-                continue;
-            }
-
-            if (isText) {
-
-                const textFile =
-                    file.buffer.toString("utf8");
-
+                // Дополнительно сообщаем AI имя файла.
                 fileParts.push({
                     type: "text",
                     text:
-                        `Файл: ${name}\n\n${textFile}`
+                        `Прикреплено изображение: ${processed.originalName}`
                 });
 
                 continue;
             }
 
+            // Для документов, PDF, таблиц, презентаций,
+            // текста и исходного кода используем извлечённый
+            // процессором текст.
             fileParts.push({
                 type: "text",
-                text:
-                    `Прикреплён файл "${name}" (${type}). ` +
-                    `Его содержимое не было извлечено сервером.`
+                text: processed.aiContext
             });
         }
 

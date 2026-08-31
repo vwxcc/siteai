@@ -13,6 +13,7 @@ router.get("/", auth, (req, res) => {
             enabled
         FROM models
         WHERE enabled = 1
+          AND manually_added = 1
         ORDER BY name
     `).all();
 

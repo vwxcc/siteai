@@ -38,8 +38,8 @@ router.post("/models", (req, res) => {
 
     const result = db.prepare(`
         INSERT INTO models
-        (name, model_id, base_url, api_key)
-        VALUES (?, ?, ?, ?)
+        (name, model_id, base_url, api_key, manually_added)
+        VALUES (?, ?, ?, ?, 1)
     `).run(
         name,
         model_id,
@@ -102,10 +102,36 @@ router.patch("/models/:id", (req, res) => {
 });
 
 router.delete("/models/:id", (req, res) => {
-    db.prepare(`
-        DELETE FROM models
+    const modelId = Number(req.params.id);
+
+    if (!Number.isInteger(modelId)) {
+        return res.status(400).json({
+            error: "Некорректный ID модели"
+        });
+    }
+
+    const model = db.prepare(`
+        SELECT id
+        FROM models
         WHERE id = ?
-    `).run(req.params.id);
+    `).get(modelId);
+
+    if (!model) {
+        return res.status(404).json({
+            error: "Модель не найдена"
+        });
+    }
+
+    // Не удаляем запись физически:
+    // на модель могут ссылаться старые чаты, сообщения и статистика.
+    // Вместо этого полностью скрываем её из доступных моделей.
+    db.prepare(`
+        UPDATE models
+        SET
+            enabled = 0,
+            manually_added = 0
+        WHERE id = ?
+    `).run(modelId);
 
     res.json({
         success: true

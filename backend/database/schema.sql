@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS models (
     base_url TEXT NOT NULL,
     api_key TEXT NOT NULL,
     enabled INTEGER NOT NULL DEFAULT 1,
+    manually_added INTEGER NOT NULL DEFAULT 1,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -60,3 +61,21 @@ ON messages(chat_id);
 
 CREATE INDEX IF NOT EXISTS idx_usage_user
 ON usage(user_id);
+
+CREATE TABLE IF NOT EXISTS message_files (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    message_id INTEGER NOT NULL,
+    original_name TEXT NOT NULL,
+    stored_name TEXT NOT NULL,
+    mime_type TEXT,
+    file_size INTEGER DEFAULT 0,
+    file_type TEXT,
+    stored_path TEXT NOT NULL,
+    extracted_text TEXT,
+    processing_status TEXT NOT NULL DEFAULT 'processed',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (message_id) REFERENCES messages(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_message_files_message
+ON message_files(message_id);
