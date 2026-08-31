@@ -1,4 +1,4 @@
-FROM node:22-alpine
+FROM node:22
 
 WORKDIR /app
 
@@ -6,7 +6,7 @@ COPY backend/package*.json ./backend/
 
 WORKDIR /app/backend
 
-RUN npm install
+RUN npm install --build-from-source better-sqlite3
 
 COPY backend ./
 
