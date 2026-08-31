@@ -297,6 +297,44 @@
             letter-spacing: .55px;
         }
 
+        .history-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .history-toggle {
+            width: 32px;
+            height: 32px;
+            border: 0;
+            background: transparent;
+            border-radius: 9px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: inherit;
+            transition: background .15s ease, transform .2s ease;
+        }
+
+        .history-toggle:hover {
+            background: var(--sidebar-hover);
+        }
+
+        .history-toggle svg {
+            width: 17px;
+            height: 17px;
+            transition: transform .2s ease;
+        }
+
+        .sidebar.history-collapsed .history-list {
+            display: none;
+        }
+
+        .sidebar.history-collapsed .history-toggle svg {
+            transform: rotate(-90deg);
+        }
+
         .history-list {
             flex: 1;
             min-height: 0;
@@ -656,6 +694,11 @@
             visibility: visible;
 
             transform: translateY(0);
+        }
+
+
+        .model-option-description:empty {
+            display: none;
         }
 
         .model-option {
@@ -2100,6 +2143,17 @@
 
         @media (max-width: 500px) {
 
+            html {
+                font-size: 15px;
+            }
+
+            body {
+                min-width: 0;
+                overflow-x: hidden;
+            }
+
+
+
             .topbar-right .top-icon {
                 display: none;
             }
@@ -2677,6 +2731,25 @@
             <div class="history-title">
                 История
             </div>
+
+            <button
+                type="button"
+                class="history-toggle"
+                id="historyToggle"
+                aria-label="Свернуть историю"
+                title="Свернуть историю"
+            >
+                <svg viewBox="0 0 24 24">
+                    <path
+                        d="M6 9l6 6 6-6"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                    />
+                </svg>
+            </button>
 
         </div>
 
@@ -3553,7 +3626,14 @@
                     credentials: "include",
                     ...options,
                     headers: {
-                        "Content-Type": "application/json",
+                        ...(
+                            options.body instanceof FormData
+                                ? {}
+                                : {
+                                    "Content-Type":
+                                        "application/json"
+                                }
+                        ),
                         ...(token
                             ? {
                                 "Authorization":
@@ -3958,8 +4038,59 @@
 
 
     /* ============================================================
+       HISTORY COLLAPSE
+    ============================================================ */
+
+    const historyToggle =
+        document.getElementById(
+            "historyToggle"
+        );
+
+    if (historyToggle) {
+
+        const savedHistoryState =
+            localStorage.getItem(
+                "siteai_history_collapsed"
+            );
+
+        if (
+            savedHistoryState ===
+            "1"
+        ) {
+
+            sidebar.classList.add(
+                "history-collapsed"
+            );
+
+        }
+
+        historyToggle.addEventListener(
+            "click",
+            event => {
+
+                event.stopPropagation();
+
+                const collapsed =
+                    sidebar.classList.toggle(
+                        "history-collapsed"
+                    );
+
+                localStorage.setItem(
+                    "siteai_history_collapsed",
+                    collapsed ? "1" : "0"
+                );
+
+            }
+        );
+
+    }
+
+
+    /* ============================================================
        MODELS
     ============================================================ */
+
+
 
     async function loadModels() {
 
@@ -4068,8 +4199,6 @@
                         <span class="model-option-description">
                             ${escapeHtml(
                                 model.description ||
-                                model.provider ||
-                                model.id ||
                                 ""
                             )}
                         </span>
@@ -4674,31 +4803,38 @@
         `;
 
 
-        element
-            .querySelectorAll(
-                ".suggestion"
-            )
-            .forEach(
-                button => {
+        element.addEventListener(
+            "click",
+            event => {
 
-                    button.addEventListener(
-                        "click",
-                        () => {
-
-                            messageInput.value =
-                                button.dataset.prompt;
-
-                            autoResizeInput();
-
-                            updateSendButton();
-
-                            messageInput.focus();
-
-                        }
+                const button =
+                    event.target.closest(
+                        ".suggestion"
                     );
 
+                if (!button) {
+                    return;
                 }
-            );
+
+                event.preventDefault();
+                event.stopPropagation();
+
+                const prompt =
+                    button.dataset.prompt;
+
+                if (!prompt) {
+                    return;
+                }
+
+                messageInput.value =
+                    prompt;
+
+                autoResizeInput();
+                updateSendButton();
+                messageInput.focus();
+
+            }
+        );
 
 
         return element;
@@ -4885,7 +5021,15 @@
             messageInput.value.trim();
 
 
-        if (!text) {
+        const selectedFiles =
+            Array.isArray(state.selectedFiles)
+                ? state.selectedFiles
+                : [];
+
+        if (
+            !text &&
+            !selectedFiles.length
+        ) {
             return;
         }
 
@@ -4917,11 +5061,20 @@
             true;
 
 
+        const displayContent =
+            text ||
+            selectedFiles
+                .map(
+                    file =>
+                        `[Файл: ${file.name}]`
+                )
+                .join("\n");
+
         const userMessage = {
 
             role: "user",
 
-            content: text
+            content: displayContent
 
         };
 
@@ -4955,7 +5108,9 @@
                             body: JSON.stringify({
                                 title:
                                     generateChatTitle(
-                                        text
+                                        text ||
+                                        selectedFiles[0]?.name ||
+                                        "Новый чат"
                                     ),
                                 model_id:
                                     state.selectedModel?.dbId ??
@@ -5041,9 +5196,38 @@
                     {
                         method: "POST",
 
-                        body: JSON.stringify({
-                            content: text
-                        })
+                        body: (() => {
+
+                            const formData =
+                                new FormData();
+
+                            formData.append(
+                                "content",
+                                text
+                            );
+
+                            formData.append(
+                                "model_id",
+                                String(
+                                    state.selectedModel?.dbId ??
+                                    state.selectedModel?.id ??
+                                    ""
+                                )
+                            );
+
+                            selectedFiles.forEach(
+                                file => {
+                                    formData.append(
+                                        "files",
+                                        file,
+                                        file.name
+                                    );
+                                }
+                            );
+
+                            return formData;
+
+                        })()
                     }
                 );
 
@@ -5074,6 +5258,11 @@
             });
 
 
+            fileInput.value = "";
+
+            state.selectedFiles = [];
+
+
             await loadChats();
 
 
@@ -5096,13 +5285,8 @@
 
             state.currentMessages =
                 state.currentMessages.filter(
-                    (
-                        message,
-                        index,
-                        array
-                    ) =>
-                        index !==
-                        array.length - 1
+                    message =>
+                        message !== userMessage
                 );
 
 
@@ -5163,9 +5347,20 @@
 
     function updateSendButton() {
 
+        const hasText =
+            Boolean(
+                messageInput.value.trim()
+            );
+
+        const hasFiles =
+            Array.isArray(
+                state.selectedFiles
+            ) &&
+            state.selectedFiles.length > 0;
+
         sendButton.disabled =
             state.isSending ||
-            !messageInput.value.trim();
+            (!hasText && !hasFiles);
 
     }
 
@@ -5217,6 +5412,8 @@
                 );
 
             }
+
+            updateSendButton();
 
         }
     );
