@@ -4956,7 +4956,11 @@
                                 title:
                                     generateChatTitle(
                                         text
-                                    )
+                                    ),
+                                model_id:
+                                    state.selectedModel?.dbId ??
+                                    state.selectedModel?.id ??
+                                    null
                             })
                         }
                     );
@@ -5031,21 +5035,14 @@
 
             const response =
                 await api(
-                    "/api/chat/completions",
+                    `/api/chats/${encodeURIComponent(
+                        state.currentChatId
+                    )}/messages`,
                     {
                         method: "POST",
 
                         body: JSON.stringify({
-
-                            chat_id:
-                                state.currentChatId,
-
-                            model:
-                                state.selectedModel.id,
-
-                            message:
-                                text
-
+                            content: text
                         })
                     }
                 );
