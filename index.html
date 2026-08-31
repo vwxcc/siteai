@@ -1,1125 +1,3271 @@
 <!DOCTYPE html>
-
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-```
-<title>AI Chat</title>
+    <title>AI Chat</title>
+
+    <style>
+        @font-face {
+            font-family: "Yandex Display";
+            src: url("/YandexSansDisplay-Bold.ttf") format("truetype");
+            font-weight: 700;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        @font-face {
+            font-family: "Yandex Thin";
+            src: url("/YandexSansText-Regular.ttf") format("truetype");
+            font-weight: 400;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        :root {
+            --background: #f7f3ec;
+            --sidebar: #eee9e1;
+            --sidebar-hover: #e5dfd6;
+            --surface: #fcfaf7;
+            --surface-hover: #f2eee8;
+            --surface-active: #e9e3da;
+
+            --text: #26231f;
+            --text-secondary: #6f6962;
+            --text-tertiary: #918a82;
+
+            --border: #ddd6cd;
+            --border-light: rgba(74, 65, 55, 0.08);
+
+            --accent: #d97757;
+            --accent-hover: #c96949;
+
+            --danger: #bd5548;
+            --success: #56815d;
+
+            --user-message: #e8e1d8;
+
+            --shadow-small:
+                0 2px 8px rgba(48, 39, 30, 0.04);
+
+            --shadow-medium:
+                0 12px 35px rgba(48, 39, 30, 0.09);
+
+            --shadow-large:
+                0 22px 65px rgba(48, 39, 30, 0.14);
+
+            --sidebar-width: 292px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: var(--background);
+            color: var(--text);
+
+            font-family: "Yandex Thin", Arial, sans-serif;
+            font-size: 14px;
+
+            -webkit-font-smoothing: antialiased;
+            text-rendering: optimizeLegibility;
+
+            overflow: hidden;
+        }
+
+        button,
+        input,
+        textarea,
+        select {
+            font-family: "Yandex Thin", Arial, sans-serif;
+        }
+
+        button {
+            border: 0;
+            outline: 0;
+            cursor: pointer;
+        }
+
+        svg {
+            display: block;
+        }
+
+        .display-font {
+            font-family: "Yandex Display", Arial, sans-serif;
+        }
+
+        .hidden {
+            display: none !important;
+        }
 
-<style>
-    @font-face {
-        font-family: "Yandex Sans";
-        src: local("Yandex Sans"),
-             local("YandexSans");
-        font-style: normal;
-        font-weight: 100 900;
-    }
+        /* =========================================================
+           APP
+        ========================================================= */
 
-    :root {
-        --bg: #f7f3ed;
-        --sidebar: #eee9e1;
-        --sidebar-hover: #e5dfd6;
-        --surface: #fbf9f6;
-        --surface-hover: #f1ede7;
-        --border: #ddd7cf;
-        --text: #26231f;
-        --muted: #77716a;
-        --soft: #918b84;
-        --accent: #d97757;
-        --user-message: #e9e3da;
-    }
+        .app {
+            width: 100%;
+            height: 100vh;
 
-    * {
-        box-sizing: border-box;
-    }
+            display: flex;
 
-    html,
-    body {
-        width: 100%;
-        height: 100%;
-        margin: 0;
-    }
+            background: var(--background);
+        }
 
-    body {
-        font-family: "Yandex Sans", Arial, sans-serif;
-        background: var(--bg);
-        color: var(--text);
-        overflow: hidden;
-        -webkit-font-smoothing: antialiased;
-    }
-
-    button,
-    input,
-    textarea {
-        font-family: inherit;
-    }
-
-    button {
-        border: 0;
-        cursor: pointer;
-    }
-
-    /* =========================
-       APP
-    ========================= */
-
-    .app {
-        width: 100%;
-        height: 100vh;
-        display: flex;
-        background: var(--bg);
-    }
-
-    /* =========================
-       SIDEBAR
-    ========================= */
-
-    .sidebar {
-        width: 292px;
-        min-width: 292px;
-        height: 100%;
-
-        display: flex;
-        flex-direction: column;
-
-        padding: 18px 14px;
-
-        background: var(--sidebar);
-        border-right: 1px solid rgba(80, 70, 60, .08);
-    }
-
-    .sidebar-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-
-        padding: 4px 7px 20px;
-    }
-
-    .brand {
-        display: flex;
-        align-items: center;
-        gap: 9px;
-
-        font-size: 19px;
-        font-weight: 700;
-        letter-spacing: -.4px;
-    }
-
-    .brand-mark {
-        width: 27px;
-        height: 27px;
-
-        display: flex;
-        align-items: center;
-        justify-content: center;
-
-        border-radius: 9px;
-
-        background: var(--text);
-        color: var(--bg);
-
-        font-size: 13px;
-        font-weight: 700;
-    }
-
-    .sidebar-new {
-        width: 36px;
-        height: 36px;
-
-        display: flex;
-        align-items: center;
-        justify-content: center;
-
-        border-radius: 11px;
-
-        background: transparent;
-        color: var(--text);
-
-        font-size: 22px;
-
-        transition: background .15s ease;
-    }
-
-    .sidebar-new:hover {
-        background: var(--sidebar-hover);
-    }
-
-    /* =========================
-       SIDEBAR SEARCH
-    ========================= */
-
-    .search {
-        position: relative;
-        margin-bottom: 21px;
-    }
-
-    .search-icon {
-        position: absolute;
-        left: 13px;
-        top: 50%;
-
-        transform: translateY(-50%);
-
-        color: var(--muted);
-        font-size: 16px;
-    }
-
-    .search input {
-        width: 100%;
-        height: 40px;
-
-        padding: 0 12px 0 36px;
-
-        border: 1px solid transparent;
-        border-radius: 11px;
-
-        outline: none;
-
-        background: rgba(255, 255, 255, .42);
-
-        color: var(--text);
-        font-size: 13px;
-
-        transition:
-            background .15s ease,
-            border-color .15s ease;
-    }
-
-    .search input:focus {
-        background: rgba(255, 255, 255, .7);
-        border-color: var(--border);
-    }
-
-    .search input::placeholder {
-        color: var(--soft);
-    }
-
-    /* =========================
-       HISTORY
-    ========================= */
-
-    .history-label {
-        padding: 0 9px 8px;
-
-        color: var(--muted);
-
-        font-size: 11px;
-        font-weight: 650;
-        text-transform: uppercase;
-        letter-spacing: .5px;
-    }
-
-    .chat-list {
-        flex: 1;
-        min-height: 0;
-
-        overflow-y: auto;
-
-        padding-right: 2px;
-    }
-
-    .chat-item {
-        width: 100%;
-        height: 42px;
-
-        display: flex;
-        align-items: center;
-
-        padding: 0 11px;
-        margin-bottom: 2px;
-
-        border-radius: 10px;
-
-        background: transparent;
-        color: var(--text);
-
-        text-align: left;
-        font-size: 13px;
-
-        transition: background .15s ease;
-    }
-
-    .chat-item:hover {
-        background: var(--sidebar-hover);
-    }
-
-    .chat-item.active {
-        background: rgba(255, 255, 255, .58);
-        font-weight: 600;
-    }
-
-    .chat-title {
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-
-    /* =========================
-       SIDEBAR BOTTOM
-    ========================= */
-
-    .sidebar-bottom {
-        padding-top: 10px;
-        border-top: 1px solid rgba(80, 70, 60, .09);
-    }
-
-    .sidebar-account {
-        width: 100%;
-        min-height: 48px;
-
-        display: flex;
-        align-items: center;
-        gap: 10px;
-
-        padding: 6px 8px;
-
-        border-radius: 12px;
-
-        background: transparent;
-        text-align: left;
-
-        transition: background .15s ease;
-    }
-
-    .sidebar-account:hover {
-        background: var(--sidebar-hover);
-    }
-
-    .avatar {
-        width: 32px;
-        height: 32px;
-
-        display: flex;
-        align-items: center;
-        justify-content: center;
-
-        flex-shrink: 0;
-
-        border-radius: 50%;
-
-        background: #d5cec4;
-        color: var(--text);
-
-        font-size: 12px;
-        font-weight: 700;
-    }
-
-    .account-info {
-        min-width: 0;
-    }
-
-    .account-name {
-        font-size: 13px;
-        font-weight: 600;
-    }
-
-    .account-role {
-        margin-top: 2px;
-
-        color: var(--muted);
-        font-size: 11px;
-    }
-
-    /* =========================
-       MAIN
-    ========================= */
-
-    .main {
-        flex: 1;
-        min-width: 0;
-        height: 100%;
-
-        display: flex;
-        flex-direction: column;
-
-        background: var(--bg);
-    }
-
-    /* =========================
-       TOP BAR
-    ========================= */
-
-    .topbar {
-        height: 64px;
-        min-height: 64px;
-
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-
-        padding: 0 28px;
-
-        background: var(--bg);
-    }
-
-    .mobile-menu {
-        display: none;
-
-        width: 38px;
-        height: 38px;
-
-        align-items: center;
-        justify-content: center;
-
-        margin-right: 8px;
-
-        border-radius: 10px;
-
-        background: transparent;
-
-        font-size: 19px;
-    }
-
-    .topbar-left {
-        display: flex;
-        align-items: center;
-    }
-
-    /* =========================
-       MODEL SELECTOR
-    ========================= */
-
-    .model-selector {
-        position: relative;
-    }
-
-    .model-button {
-        height: 38px;
-
-        display: flex;
-        align-items: center;
-        gap: 8px;
-
-        padding: 0 11px;
-
-        border-radius: 10px;
-
-        background: transparent;
-        color: var(--text);
-
-        font-size: 14px;
-        font-weight: 650;
-
-        transition: background .15s ease;
-    }
-
-    .model-button:hover {
-        background: var(--surface-hover);
-    }
-
-    .model-chevron {
-        color: var(--muted);
-        font-size: 10px;
-    }
-
-    /* =========================
-       MODEL MENU
-    ========================= */
-
-    .model-menu {
-        position: absolute;
-        top: 45px;
-        left: 0;
-
-        width: 290px;
-
-        padding: 6px;
-
-        background: var(--surface);
-
-        border: 1px solid var(--border);
-        border-radius: 14px;
-
-        box-shadow:
-            0 18px 45px rgba(50, 40, 30, .12),
-            0 2px 8px rgba(50, 40, 30, .05);
-
-        opacity: 0;
-        visibility: hidden;
-        transform: translateY(-5px);
-
-        transition:
-            opacity .15s ease,
-            transform .15s ease,
-            visibility .15s ease;
-
-        z-index: 30;
-    }
-
-    .model-selector.open .model-menu {
-        opacity: 1;
-        visibility: visible;
-        transform: translateY(0);
-    }
-
-    .model-option {
-        width: 100%;
-
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-
-        padding: 11px 12px;
-
-        border-radius: 10px;
-
-        background: transparent;
-
-        color: var(--text);
-        text-align: left;
-
-        transition: background .12s ease;
-    }
-
-    .model-option:hover {
-        background: var(--surface-hover);
-    }
-
-    .model-option-info {
-        min-width: 0;
-    }
-
-    .model-option-name {
-        font-size: 13px;
-        font-weight: 650;
-    }
-
-    .model-option-description {
-        margin-top: 3px;
-
-        color: var(--muted);
-        font-size: 11px;
-    }
-
-    .model-check {
-        opacity: 0;
-        color: var(--accent);
-        font-size: 15px;
-    }
-
-    .model-option.selected .model-check {
-        opacity: 1;
-    }
-
-    /* =========================
-       USER TOP
-    ========================= */
-
-    .top-user {
-        width: 35px;
-        height: 35px;
-
-        display: flex;
-        align-items: center;
-        justify-content: center;
-
-        border-radius: 50%;
-
-        background: #ded7ce;
-        color: var(--text);
-
-        font-size: 12px;
-        font-weight: 700;
-    }
-
-    /* =========================
-       CHAT
-    ========================= */
-
-    .chat {
-        flex: 1;
-        min-height: 0;
-
-        display: flex;
-        flex-direction: column;
-    }
-
-    .messages {
-        flex: 1;
-        min-height: 0;
-
-        width: 100%;
-        max-width: 920px;
-
-        margin: 0 auto;
-
-        padding: 30px 35px 20px;
-
-        overflow-y: auto;
-    }
-
-    /* =========================
-       WELCOME
-    ========================= */
-
-    .welcome {
-        min-height: 100%;
-
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-
-        padding-bottom: 75px;
-
-        text-align: center;
-    }
-
-    .welcome-title {
-        margin: 0;
-
-        font-size: 36px;
-        line-height: 1.15;
-
-        letter-spacing: -1.25px;
-        font-weight: 700;
-    }
-
-    .welcome-subtitle {
-        margin: 12px 0 0;
-
-        color: var(--muted);
-
-        font-size: 15px;
-    }
-
-    /* =========================
-       MESSAGES
-    ========================= */
-
-    .message {
-        display: flex;
-        width: 100%;
-        margin-bottom: 30px;
-    }
-
-    .message.user {
-        justify-content: flex-end;
-    }
-
-    .message-content {
-        max-width: 76%;
-
-        padding: 12px 16px;
-
-        border-radius: 17px;
-
-        font-size: 15px;
-        line-height: 1.55;
-    }
-
-    .message.user .message-content {
-        background: var(--user-message);
-    }
-
-    .message.assistant .message-content {
-        max-width: 85%;
-        padding-left: 0;
-        padding-right: 0;
-    }
-
-    /* =========================
-       COMPOSER
-    ========================= */
-
-    .composer-area {
-        width: 100%;
-        max-width: 920px;
-
-        margin: 0 auto;
-
-        padding: 10px 35px 24px;
-    }
-
-    .composer {
-        width: 100%;
-
-        display: flex;
-        align-items: flex-end;
-
-        min-height: 68px;
-
-        padding: 9px 10px 9px 14px;
-
-        background: var(--surface);
-
-        border: 1px solid var(--border);
-        border-radius: 19px;
-
-        box-shadow:
-            0 5px 18px rgba(50, 40, 30, .035);
-
-        transition:
-            border-color .15s ease,
-            box-shadow .15s ease;
-    }
-
-    .composer:focus-within {
-        border-color: #c9c1b7;
-
-        box-shadow:
-            0 7px 24px rgba(50, 40, 30, .07);
-    }
-
-    .attach-button {
-        width: 42px;
-        height: 42px;
-
-        display: flex;
-        align-items: center;
-        justify-content: center;
-
-        flex-shrink: 0;
-
-        border-radius: 12px;
-
-        background: transparent;
-        color: var(--muted);
-
-        font-size: 22px;
-
-        transition:
-            background .15s ease,
-            color .15s ease;
-    }
-
-    .attach-button:hover {
-        background: var(--surface-hover);
-        color: var(--text);
-    }
-
-    .message-input {
-        flex: 1;
-
-        min-height: 42px;
-        max-height: 180px;
-
-        padding: 10px 12px;
-
-        resize: none;
-        outline: none;
-        border: 0;
-
-        background: transparent;
-
-        color: var(--text);
-
-        font-size: 15px;
-        line-height: 1.45;
-    }
-
-    .message-input::placeholder {
-        color: #938c84;
-    }
-
-    .send-button {
-        width: 42px;
-        height: 42px;
-
-        display: flex;
-        align-items: center;
-        justify-content: center;
-
-        flex-shrink: 0;
-
-        border-radius: 12px;
-
-        background: var(--text);
-        color: #fff;
-
-        font-size: 18px;
-
-        transition:
-            opacity .15s ease,
-            transform .15s ease;
-    }
-
-    .send-button:hover:not(:disabled) {
-        transform: translateY(-1px);
-    }
-
-    .send-button:disabled {
-        opacity: .25;
-        cursor: default;
-    }
-
-    .composer-note {
-        margin-top: 8px;
-
-        text-align: center;
-
-        color: #9b948c;
-
-        font-size: 10px;
-    }
-
-    /* =========================
-       SCROLLBAR
-    ========================= */
-
-    ::-webkit-scrollbar {
-        width: 7px;
-    }
-
-    ::-webkit-scrollbar-thumb {
-        background: rgba(100, 90, 80, .18);
-        border-radius: 10px;
-    }
-
-    ::-webkit-scrollbar-track {
-        background: transparent;
-    }
-
-    /* =========================
-       MOBILE
-    ========================= */
-
-    @media (max-width: 800px) {
+        /* =========================================================
+           SIDEBAR
+        ========================================================= */
 
         .sidebar {
-            position: fixed;
-            left: 0;
-            top: 0;
+            width: var(--sidebar-width);
+            min-width: var(--sidebar-width);
+            height: 100vh;
 
-            width: 285px;
-            min-width: 285px;
+            display: flex;
+            flex-direction: column;
+
+            padding: 18px 13px 13px;
+
+            background: var(--sidebar);
+
+            border-right: 1px solid var(--border-light);
 
             z-index: 100;
-
-            transform: translateX(-100%);
-
-            transition: transform .2s ease;
-
-            box-shadow:
-                12px 0 40px rgba(40, 30, 20, .12);
         }
 
-        .sidebar.mobile-open {
-            transform: translateX(0);
-        }
+        .sidebar-header {
+            height: 43px;
 
-        .mobile-menu {
             display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            padding: 0 5px 0 8px;
+
+            margin-bottom: 17px;
         }
 
-        .topbar {
-            height: 58px;
-            min-height: 58px;
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
 
-            padding: 0 12px;
+            min-width: 0;
         }
 
-        .messages {
-            padding: 20px 15px 12px;
+        .brand-logo {
+            width: 29px;
+            height: 29px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            flex-shrink: 0;
+
+            border-radius: 9px;
+
+            background: var(--text);
+            color: var(--background);
+
+            font-family: "Yandex Display", Arial, sans-serif;
+            font-size: 10px;
+            letter-spacing: -.2px;
         }
 
-        .welcome-title {
-            font-size: 29px;
+        .brand-name {
+            font-family: "Yandex Display", Arial, sans-serif;
+            font-size: 18px;
+            letter-spacing: -.45px;
+
+            white-space: nowrap;
         }
 
-        .welcome-subtitle {
-            font-size: 14px;
+        .icon-button {
+            width: 37px;
+            height: 37px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            border-radius: 10px;
+
+            background: transparent;
+            color: var(--text-secondary);
+
+            transition:
+                background .15s ease,
+                color .15s ease;
         }
 
-        .composer-area {
-            padding: 7px 10px 14px;
+        .icon-button:hover {
+            background: var(--sidebar-hover);
+            color: var(--text);
         }
 
-        .composer {
-            border-radius: 17px;
+        .icon-button svg {
+            width: 19px;
+            height: 19px;
         }
 
-        .composer-note {
-            display: none;
+        /* =========================================================
+           SEARCH
+        ========================================================= */
+
+        .search-box {
+            position: relative;
+
+            margin: 0 3px 21px;
         }
 
-        .message-content {
-            max-width: 88%;
+        .search-box svg {
+            position: absolute;
+
+            left: 12px;
+            top: 50%;
+
+            width: 17px;
+            height: 17px;
+
+            transform: translateY(-50%);
+
+            color: var(--text-secondary);
+
+            pointer-events: none;
         }
-    }
 
-    @media (max-width: 450px) {
+        .search-input {
+            width: 100%;
+            height: 40px;
 
-        .model-button {
-            max-width: 200px;
+            padding: 0 12px 0 37px;
+
+            border: 1px solid transparent;
+            border-radius: 11px;
+
+            outline: none;
+
+            background: rgba(255, 255, 255, .42);
+
+            color: var(--text);
+
+            font-size: 13px;
+
+            transition:
+                background .15s ease,
+                border-color .15s ease;
         }
 
-        .model-button span:first-child {
+        .search-input:focus {
+            background: rgba(255, 255, 255, .72);
+            border-color: var(--border);
+        }
+
+        .search-input::placeholder {
+            color: var(--text-tertiary);
+        }
+
+        /* =========================================================
+           HISTORY
+        ========================================================= */
+
+        .history-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            padding: 0 9px 8px;
+        }
+
+        .history-title {
+            color: var(--text-secondary);
+
+            font-size: 11px;
+            font-weight: 400;
+
+            text-transform: uppercase;
+            letter-spacing: .55px;
+        }
+
+        .history-list {
+            flex: 1;
+            min-height: 0;
+
+            overflow-y: auto;
+
+            padding: 0 1px;
+        }
+
+        .history-group {
+            margin-bottom: 16px;
+        }
+
+        .history-group-title {
+            padding: 0 9px 6px;
+
+            color: var(--text-tertiary);
+
+            font-size: 10px;
+        }
+
+        .chat-row {
+            position: relative;
+
+            width: 100%;
+            min-height: 43px;
+
+            display: flex;
+            align-items: center;
+
+            padding: 0 8px 0 11px;
+            margin-bottom: 2px;
+
+            border-radius: 10px;
+
+            background: transparent;
+
+            color: var(--text);
+
+            text-align: left;
+
+            transition:
+                background .13s ease;
+        }
+
+        .chat-row:hover {
+            background: var(--sidebar-hover);
+        }
+
+        .chat-row.active {
+            background: rgba(255, 255, 255, .58);
+        }
+
+        .chat-row-content {
+            min-width: 0;
+            flex: 1;
+        }
+
+        .chat-row-title {
             overflow: hidden;
+
+            color: var(--text);
+
+            font-size: 13px;
+            line-height: 1.3;
+
             text-overflow: ellipsis;
             white-space: nowrap;
         }
 
-        .top-user {
-            width: 33px;
-            height: 33px;
+        .chat-row-meta {
+            margin-top: 3px;
+
+            color: var(--text-tertiary);
+
+            font-size: 10px;
+        }
+
+        .chat-row-menu {
+            width: 30px;
+            height: 30px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            flex-shrink: 0;
+
+            border-radius: 8px;
+
+            background: transparent;
+            color: var(--text-secondary);
+
+            opacity: 0;
+
+            transition:
+                opacity .12s ease,
+                background .12s ease;
+        }
+
+        .chat-row:hover .chat-row-menu,
+        .chat-row.active .chat-row-menu {
+            opacity: 1;
+        }
+
+        .chat-row-menu:hover {
+            background: rgba(0, 0, 0, .05);
+        }
+
+        .chat-row-menu svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .history-empty {
+            padding: 22px 12px;
+
+            color: var(--text-tertiary);
+
+            font-size: 12px;
+            line-height: 1.5;
+
+            text-align: center;
+        }
+
+        /* =========================================================
+           SIDEBAR ACCOUNT
+        ========================================================= */
+
+        .sidebar-bottom {
+            padding-top: 10px;
+
+            border-top: 1px solid var(--border-light);
+        }
+
+        .account-button {
+            width: 100%;
+            min-height: 49px;
+
+            display: flex;
+            align-items: center;
+
+            padding: 6px 8px;
+
+            border-radius: 12px;
+
+            background: transparent;
+
+            text-align: left;
+
+            transition:
+                background .15s ease;
+        }
+
+        .account-button:hover {
+            background: var(--sidebar-hover);
+        }
+
+        .avatar {
+            width: 32px;
+            height: 32px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            flex-shrink: 0;
+
+            border-radius: 50%;
+
+            background: #d5cec4;
+
+            color: var(--text);
+
+            font-size: 11px;
+        }
+
+        .account-details {
+            min-width: 0;
+
+            margin-left: 10px;
+        }
+
+        .account-name {
+            overflow: hidden;
+
+            color: var(--text);
+
+            font-size: 13px;
+            font-weight: 400;
+
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .account-role {
+            margin-top: 2px;
+
+            color: var(--text-tertiary);
+
+            font-size: 10px;
+        }
+
+        .account-arrow {
+            margin-left: auto;
+
+            color: var(--text-tertiary);
+        }
+
+        .account-arrow svg {
+            width: 15px;
+            height: 15px;
+        }
+
+        /* =========================================================
+           MAIN
+        ========================================================= */
+
+        .main {
+            min-width: 0;
+            flex: 1;
+            height: 100vh;
+
+            display: flex;
+            flex-direction: column;
+
+            background: var(--background);
+        }
+
+        /* =========================================================
+           TOPBAR
+        ========================================================= */
+
+        .topbar {
+            width: 100%;
+            height: 66px;
+            min-height: 66px;
+
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            padding: 0 25px;
+
+            background: var(--background);
+        }
+
+        .topbar-left {
+            display: flex;
+            align-items: center;
+        }
+
+        .mobile-menu {
+            display: none;
+
+            width: 38px;
+            height: 38px;
+
+            align-items: center;
+            justify-content: center;
+
+            margin-right: 6px;
+
+            border-radius: 10px;
+
+            background: transparent;
+            color: var(--text-secondary);
+        }
+
+        .mobile-menu svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        /* =========================================================
+           MODEL SELECTOR
+        ========================================================= */
+
+        .model-selector {
+            position: relative;
+        }
+
+        .model-button {
+            height: 39px;
+
+            display: flex;
+            align-items: center;
+            gap: 8px;
+
+            padding: 0 11px;
+
+            border-radius: 10px;
+
+            background: transparent;
+
+            color: var(--text);
+
+            font-size: 14px;
+
+            transition:
+                background .15s ease;
+        }
+
+        .model-button:hover {
+            background: var(--surface-hover);
+        }
+
+        .model-button svg {
+            width: 14px;
+            height: 14px;
+
+            color: var(--text-secondary);
+
+            transition:
+                transform .15s ease;
+        }
+
+        .model-selector.open .model-button svg {
+            transform: rotate(180deg);
+        }
+
+        .model-menu {
+            position: absolute;
+
+            top: 45px;
+            left: 0;
+
+            width: 310px;
+            max-height: 420px;
+
+            overflow-y: auto;
+
+            padding: 7px;
+
+            border: 1px solid var(--border);
+            border-radius: 15px;
+
+            background: var(--surface);
+
+            box-shadow: var(--shadow-medium);
+
+            opacity: 0;
+            visibility: hidden;
+
+            transform: translateY(-5px);
+
+            transition:
+                opacity .14s ease,
+                visibility .14s ease,
+                transform .14s ease;
+
+            z-index: 200;
+        }
+
+        .model-selector.open .model-menu {
+            opacity: 1;
+            visibility: visible;
+
+            transform: translateY(0);
+        }
+
+        .model-option {
+            width: 100%;
+
+            display: flex;
+            align-items: center;
+
+            padding: 11px;
+
+            border-radius: 10px;
+
+            background: transparent;
+
+            color: var(--text);
+
+            text-align: left;
+
+            transition:
+                background .12s ease;
+        }
+
+        .model-option:hover {
+            background: var(--surface-hover);
+        }
+
+        .model-option.selected {
+            background: var(--surface-active);
+        }
+
+        .model-option-info {
+            min-width: 0;
+            flex: 1;
+        }
+
+        .model-option-name {
+            display: block;
+
+            overflow: hidden;
+
+            font-size: 13px;
+
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .model-option-description {
+            display: block;
+
+            margin-top: 3px;
+
+            overflow: hidden;
+
+            color: var(--text-secondary);
+
+            font-size: 10px;
+
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .model-status {
+            width: 7px;
+            height: 7px;
+
+            margin-right: 9px;
+
+            flex-shrink: 0;
+
+            border-radius: 50%;
+
+            background: var(--success);
+        }
+
+        .model-status.offline {
+            background: var(--text-tertiary);
+        }
+
+        .model-empty {
+            padding: 18px 13px;
+
+            color: var(--text-secondary);
+
+            font-size: 12px;
+            line-height: 1.45;
+        }
+
+        /* =========================================================
+           TOP RIGHT
+        ========================================================= */
+
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .top-icon {
+            width: 37px;
+            height: 37px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            border-radius: 10px;
+
+            background: transparent;
+
+            color: var(--text-secondary);
+
+            transition:
+                background .15s ease,
+                color .15s ease;
+        }
+
+        .top-icon:hover {
+            background: var(--surface-hover);
+            color: var(--text);
+        }
+
+        .top-icon svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .top-avatar {
+            width: 34px;
+            height: 34px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            margin-left: 5px;
+
+            border-radius: 50%;
+
+            background: #ded7ce;
+
+            color: var(--text);
+
+            font-size: 11px;
+        }
+
+        /* =========================================================
+           CHAT AREA
+        ========================================================= */
+
+        .chat-area {
+            flex: 1;
+            min-height: 0;
+
+            display: flex;
+            flex-direction: column;
+        }
+
+        .messages {
+            flex: 1;
+            min-height: 0;
+
+            width: 100%;
+            max-width: 950px;
+
+            margin: 0 auto;
+
+            padding: 26px 38px 25px;
+
+            overflow-y: auto;
+            scroll-behavior: smooth;
+        }
+
+        /* =========================================================
+           WELCOME
+        ========================================================= */
+
+        .welcome {
+            width: 100%;
+            min-height: 100%;
+
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+
+            padding-bottom: 74px;
+
+            text-align: center;
         }
 
         .welcome-title {
-            font-size: 27px;
-        }
-    }
-</style>
-```
+            margin: 0;
 
+            font-family: "Yandex Display", Arial, sans-serif;
+
+            font-size: 38px;
+            line-height: 1.12;
+
+            letter-spacing: -1.3px;
+        }
+
+        .welcome-description {
+            max-width: 520px;
+
+            margin: 13px 0 0;
+
+            color: var(--text-secondary);
+
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .suggestions {
+            display: grid;
+
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+
+            width: min(620px, 100%);
+
+            gap: 8px;
+
+            margin-top: 31px;
+        }
+
+        .suggestion {
+            min-height: 74px;
+
+            padding: 13px 14px;
+
+            border: 1px solid var(--border-light);
+            border-radius: 13px;
+
+            background: rgba(255, 255, 255, .28);
+
+            color: var(--text);
+
+            text-align: left;
+
+            transition:
+                background .15s ease,
+                border-color .15s ease,
+                transform .15s ease;
+        }
+
+        .suggestion:hover {
+            background: rgba(255, 255, 255, .55);
+
+            border-color: var(--border);
+
+            transform: translateY(-1px);
+        }
+
+        .suggestion-title {
+            font-size: 12px;
+        }
+
+        .suggestion-description {
+            margin-top: 5px;
+
+            color: var(--text-secondary);
+
+            font-size: 10px;
+            line-height: 1.4;
+        }
+
+        /* =========================================================
+           MESSAGES
+        ========================================================= */
+
+        .message {
+            width: 100%;
+
+            display: flex;
+
+            margin-bottom: 31px;
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .message.assistant {
+            justify-content: flex-start;
+        }
+
+        .message-inner {
+            max-width: 82%;
+        }
+
+        .message.user .message-inner {
+            max-width: 76%;
+        }
+
+        .message-role {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+
+            margin-bottom: 6px;
+
+            color: var(--text-secondary);
+
+            font-size: 11px;
+        }
+
+        .message-role-dot {
+            width: 19px;
+            height: 19px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            border-radius: 6px;
+
+            background: var(--text);
+
+            color: var(--background);
+
+            font-family: "Yandex Display", Arial, sans-serif;
+
+            font-size: 7px;
+        }
+
+        .message.user .message-role {
+            justify-content: flex-end;
+        }
+
+        .message-text {
+            font-size: 15px;
+            line-height: 1.62;
+
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+        }
+
+        .message.user .message-text {
+            padding: 12px 16px;
+
+            border-radius: 17px;
+
+            background: var(--user-message);
+        }
+
+        .message.assistant .message-text {
+            padding: 1px 0;
+        }
+
+        .message-actions {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+
+            margin-top: 7px;
+
+            opacity: 0;
+
+            transition:
+                opacity .12s ease;
+        }
+
+        .message:hover .message-actions {
+            opacity: 1;
+        }
+
+        .message-action {
+            width: 30px;
+            height: 30px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            border-radius: 8px;
+
+            background: transparent;
+
+            color: var(--text-tertiary);
+        }
+
+        .message-action:hover {
+            background: var(--surface-hover);
+
+            color: var(--text);
+        }
+
+        .message-action svg {
+            width: 15px;
+            height: 15px;
+        }
+
+        /* =========================================================
+           ATTACHMENTS
+        ========================================================= */
+
+        .attachment {
+            display: flex;
+            align-items: center;
+
+            gap: 9px;
+
+            width: fit-content;
+
+            padding: 9px 11px;
+
+            margin-bottom: 8px;
+
+            border: 1px solid var(--border);
+            border-radius: 11px;
+
+            background: rgba(255,255,255,.35);
+        }
+
+        .attachment-icon {
+            width: 28px;
+            height: 28px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            border-radius: 8px;
+
+            background: var(--surface-active);
+        }
+
+        .attachment-icon svg {
+            width: 15px;
+            height: 15px;
+        }
+
+        .attachment-name {
+            max-width: 220px;
+
+            overflow: hidden;
+
+            font-size: 11px;
+
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* =========================================================
+           COMPOSER
+        ========================================================= */
+
+        .composer-area {
+            width: 100%;
+            max-width: 950px;
+
+            margin: 0 auto;
+
+            padding: 8px 38px 22px;
+        }
+
+        .composer {
+            position: relative;
+
+            width: 100%;
+
+            min-height: 74px;
+
+            display: flex;
+            align-items: flex-end;
+
+            padding: 10px 10px 10px 12px;
+
+            border: 1px solid var(--border);
+            border-radius: 20px;
+
+            background: var(--surface);
+
+            box-shadow: var(--shadow-small);
+
+            transition:
+                border-color .15s ease,
+                box-shadow .15s ease;
+        }
+
+        .composer:focus-within {
+            border-color: #c9c0b6;
+
+            box-shadow:
+                0 8px 27px rgba(48, 39, 30, .07);
+        }
+
+        .composer-tools {
+            display: flex;
+            align-items: center;
+
+            flex-shrink: 0;
+        }
+
+        .composer-button {
+            width: 42px;
+            height: 42px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            border-radius: 11px;
+
+            background: transparent;
+
+            color: var(--text-secondary);
+
+            transition:
+                background .13s ease,
+                color .13s ease;
+        }
+
+        .composer-button:hover {
+            background: var(--surface-hover);
+            color: var(--text);
+        }
+
+        .composer-button svg {
+            width: 19px;
+            height: 19px;
+        }
+
+        .message-input {
+            flex: 1;
+
+            min-width: 0;
+            min-height: 44px;
+            max-height: 190px;
+
+            padding: 11px 12px;
+
+            resize: none;
+
+            border: 0;
+            outline: 0;
+
+            background: transparent;
+
+            color: var(--text);
+
+            font-size: 15px;
+            line-height: 1.45;
+        }
+
+        .message-input::placeholder {
+            color: var(--text-tertiary);
+        }
+
+        .send-button {
+            width: 43px;
+            height: 43px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            flex-shrink: 0;
+
+            border-radius: 12px;
+
+            background: var(--text);
+
+            color: var(--background);
+
+            transition:
+                opacity .15s ease,
+                transform .15s ease;
+        }
+
+        .send-button:hover:not(:disabled) {
+            transform: translateY(-1px);
+
+            background: #171512;
+        }
+
+        .send-button:disabled {
+            opacity: .22;
+
+            cursor: default;
+        }
+
+        .send-button.loading {
+            opacity: .65;
+        }
+
+        .send-button svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .composer-footer {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            min-height: 22px;
+
+            color: var(--text-tertiary);
+
+            font-size: 10px;
+        }
+
+        /* =========================================================
+           LOADING
+        ========================================================= */
+
+        .typing {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+
+            padding: 5px 0;
+        }
+
+        .typing span {
+            width: 5px;
+            height: 5px;
+
+            border-radius: 50%;
+
+            background: var(--text-secondary);
+
+            animation: typing 1.2s infinite ease-in-out;
+        }
+
+        .typing span:nth-child(2) {
+            animation-delay: .15s;
+        }
+
+        .typing span:nth-child(3) {
+            animation-delay: .3s;
+        }
+
+        @keyframes typing {
+            0%, 60%, 100% {
+                opacity: .25;
+                transform: translateY(0);
+            }
+
+            30% {
+                opacity: 1;
+                transform: translateY(-2px);
+            }
+        }
+
+        /* =========================================================
+           OVERLAY
+        ========================================================= */
+
+        .overlay {
+            position: fixed;
+
+            inset: 0;
+
+            background: rgba(30, 25, 20, .18);
+
+            opacity: 0;
+            visibility: hidden;
+
+            transition:
+                opacity .15s ease,
+                visibility .15s ease;
+
+            z-index: 150;
+        }
+
+        .overlay.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* =========================================================
+           CONTEXT MENU
+        ========================================================= */
+
+        .context-menu {
+            position: fixed;
+
+            width: 190px;
+
+            padding: 5px;
+
+            border: 1px solid var(--border);
+
+            border-radius: 12px;
+
+            background: var(--surface);
+
+            box-shadow: var(--shadow-medium);
+
+            opacity: 0;
+            visibility: hidden;
+
+            transform: translateY(-3px);
+
+            z-index: 500;
+
+            transition:
+                opacity .12s ease,
+                visibility .12s ease,
+                transform .12s ease;
+        }
+
+        .context-menu.visible {
+            opacity: 1;
+            visibility: visible;
+
+            transform: translateY(0);
+        }
+
+        .context-item {
+            width: 100%;
+            min-height: 36px;
+
+            display: flex;
+            align-items: center;
+
+            gap: 9px;
+
+            padding: 0 10px;
+
+            border-radius: 8px;
+
+            background: transparent;
+
+            color: var(--text);
+
+            text-align: left;
+
+            font-size: 12px;
+        }
+
+        .context-item:hover {
+            background: var(--surface-hover);
+        }
+
+        .context-item.danger {
+            color: var(--danger);
+        }
+
+        .context-item svg {
+            width: 15px;
+            height: 15px;
+        }
+
+        /* =========================================================
+           MODAL
+        ========================================================= */
+
+        .modal-layer {
+            position: fixed;
+
+            inset: 0;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            padding: 20px;
+
+            background: rgba(30, 25, 20, .22);
+
+            opacity: 0;
+            visibility: hidden;
+
+            z-index: 600;
+
+            transition:
+                opacity .15s ease,
+                visibility .15s ease;
+        }
+
+        .modal-layer.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal {
+            width: min(480px, 100%);
+            max-height: calc(100vh - 40px);
+
+            overflow-y: auto;
+
+            padding: 23px;
+
+            border: 1px solid var(--border);
+
+            border-radius: 18px;
+
+            background: var(--surface);
+
+            box-shadow: var(--shadow-large);
+
+            transform: translateY(7px) scale(.985);
+
+            transition:
+                transform .15s ease;
+        }
+
+        .modal-layer.visible .modal {
+            transform: translateY(0) scale(1);
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            margin: 0;
+
+            font-family: "Yandex Display", Arial, sans-serif;
+
+            font-size: 21px;
+            letter-spacing: -.45px;
+        }
+
+        .modal-description {
+            margin: 6px 0 0;
+
+            color: var(--text-secondary);
+
+            font-size: 11px;
+            line-height: 1.45;
+        }
+
+        .modal-close {
+            width: 34px;
+            height: 34px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            border-radius: 9px;
+
+            background: transparent;
+
+            color: var(--text-secondary);
+        }
+
+        .modal-close:hover {
+            background: var(--surface-hover);
+        }
+
+        .modal-close svg {
+            width: 17px;
+            height: 17px;
+        }
+
+        /* =========================================================
+           FORMS
+        ========================================================= */
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-label {
+            display: block;
+
+            margin-bottom: 6px;
+
+            color: var(--text);
+
+            font-size: 11px;
+        }
+
+        .form-input,
+        .form-select {
+            width: 100%;
+            height: 42px;
+
+            padding: 0 12px;
+
+            border: 1px solid var(--border);
+            border-radius: 10px;
+
+            outline: 0;
+
+            background: var(--surface);
+
+            color: var(--text);
+
+            font-size: 12px;
+
+            transition:
+                border-color .13s ease,
+                box-shadow .13s ease;
+        }
+
+        .form-input:focus,
+        .form-select:focus {
+            border-color: #c5bcb2;
+
+            box-shadow:
+                0 0 0 3px rgba(217, 119, 87, .08);
+        }
+
+        .form-textarea {
+            width: 100%;
+            min-height: 100px;
+
+            padding: 11px 12px;
+
+            resize: vertical;
+
+            border: 1px solid var(--border);
+            border-radius: 10px;
+
+            outline: 0;
+
+            background: var(--surface);
+
+            color: var(--text);
+
+            font-size: 12px;
+            line-height: 1.45;
+        }
+
+        .form-hint {
+            margin-top: 5px;
+
+            color: var(--text-tertiary);
+
+            font-size: 10px;
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+
+            gap: 7px;
+
+            margin-top: 21px;
+        }
+
+        .button-secondary,
+        .button-primary,
+        .button-danger {
+            min-height: 38px;
+
+            padding: 0 15px;
+
+            border-radius: 9px;
+
+            font-size: 11px;
+        }
+
+        .button-secondary {
+            background: var(--surface-hover);
+            color: var(--text);
+        }
+
+        .button-secondary:hover {
+            background: var(--surface-active);
+        }
+
+        .button-primary {
+            background: var(--text);
+            color: var(--background);
+        }
+
+        .button-primary:hover {
+            background: #171512;
+        }
+
+        .button-danger {
+            background: rgba(189, 85, 72, .1);
+            color: var(--danger);
+        }
+
+        .button-danger:hover {
+            background: rgba(189, 85, 72, .16);
+        }
+
+        /* =========================================================
+           ADMIN
+        ========================================================= */
+
+        .admin-panel {
+            position: fixed;
+
+            top: 0;
+            right: 0;
+
+            width: min(850px, 100%);
+
+            height: 100vh;
+
+            display: flex;
+            flex-direction: column;
+
+            background: var(--background);
+
+            box-shadow: -20px 0 60px rgba(30, 25, 20, .14);
+
+            transform: translateX(100%);
+
+            transition:
+                transform .22s ease;
+
+            z-index: 400;
+        }
+
+        .admin-panel.open {
+            transform: translateX(0);
+        }
+
+        .admin-header {
+            height: 70px;
+            min-height: 70px;
+
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            padding: 0 22px;
+
+            border-bottom: 1px solid var(--border-light);
+
+            background: var(--background);
+        }
+
+        .admin-heading {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .admin-heading-icon {
+            width: 33px;
+            height: 33px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            border-radius: 9px;
+
+            background: var(--text);
+            color: var(--background);
+        }
+
+        .admin-heading-icon svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .admin-title {
+            margin: 0;
+
+            font-family: "Yandex Display", Arial, sans-serif;
+
+            font-size: 19px;
+        }
+
+        .admin-content {
+            flex: 1;
+            min-height: 0;
+
+            overflow-y: auto;
+
+            padding: 24px;
+        }
+
+        .admin-tabs {
+            display: flex;
+
+            gap: 4px;
+
+            padding: 4px;
+
+            margin-bottom: 23px;
+
+            border-radius: 11px;
+
+            background: var(--sidebar);
+        }
+
+        .admin-tab {
+            flex: 1;
+
+            min-height: 36px;
+
+            border-radius: 8px;
+
+            background: transparent;
+
+            color: var(--text-secondary);
+
+            font-size: 11px;
+        }
+
+        .admin-tab:hover {
+            color: var(--text);
+        }
+
+        .admin-tab.active {
+            background: var(--surface);
+
+            color: var(--text);
+
+            box-shadow: var(--shadow-small);
+        }
+
+        .admin-section {
+            display: none;
+        }
+
+        .admin-section.active {
+            display: block;
+        }
+
+        .admin-section-heading {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            margin-bottom: 13px;
+        }
+
+        .admin-section-title {
+            margin: 0;
+
+            font-family: "Yandex Display", Arial, sans-serif;
+
+            font-size: 18px;
+        }
+
+        .admin-grid {
+            display: grid;
+
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+
+            gap: 10px;
+
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            min-height: 98px;
+
+            padding: 16px;
+
+            border: 1px solid var(--border-light);
+            border-radius: 13px;
+
+            background: rgba(255,255,255,.25);
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+
+            font-size: 10px;
+        }
+
+        .stat-value {
+            margin-top: 9px;
+
+            font-family: "Yandex Display", Arial, sans-serif;
+
+            font-size: 25px;
+            letter-spacing: -.6px;
+        }
+
+        .admin-list {
+            display: flex;
+            flex-direction: column;
+
+            gap: 6px;
+        }
+
+        .admin-list-item {
+            display: flex;
+            align-items: center;
+
+            min-height: 61px;
+
+            padding: 9px 11px;
+
+            border: 1px solid var(--border-light);
+            border-radius: 11px;
+
+            background: rgba(255,255,255,.22);
+        }
+
+        .admin-list-main {
+            min-width: 0;
+            flex: 1;
+        }
+
+        .admin-list-name {
+            overflow: hidden;
+
+            font-size: 12px;
+
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .admin-list-meta {
+            margin-top: 3px;
+
+            overflow: hidden;
+
+            color: var(--text-secondary);
+
+            font-size: 10px;
+
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .admin-list-actions {
+            display: flex;
+            align-items: center;
+
+            gap: 3px;
+
+            margin-left: 10px;
+        }
+
+        .small-icon {
+            width: 31px;
+            height: 31px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            border-radius: 8px;
+
+            background: transparent;
+
+            color: var(--text-secondary);
+        }
+
+        .small-icon:hover {
+            background: var(--surface-hover);
+
+            color: var(--text);
+        }
+
+        .small-icon.danger:hover {
+            color: var(--danger);
+        }
+
+        .small-icon svg {
+            width: 15px;
+            height: 15px;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+
+            gap: 5px;
+
+            padding: 4px 7px;
+
+            border-radius: 7px;
+
+            background: rgba(86, 129, 93, .1);
+
+            color: var(--success);
+
+            font-size: 9px;
+        }
+
+        .status-badge.off {
+            background: rgba(110, 105, 98, .09);
+
+            color: var(--text-secondary);
+        }
+
+        .status-dot {
+            width: 5px;
+            height: 5px;
+
+            border-radius: 50%;
+
+            background: currentColor;
+        }
+
+        /* =========================================================
+           TOAST
+        ========================================================= */
+
+        .toast-container {
+            position: fixed;
+
+            right: 22px;
+            bottom: 22px;
+
+            display: flex;
+            flex-direction: column;
+
+            gap: 7px;
+
+            z-index: 1000;
+        }
+
+        .toast {
+            min-width: 230px;
+            max-width: 360px;
+
+            padding: 11px 13px;
+
+            border: 1px solid var(--border);
+
+            border-radius: 11px;
+
+            background: var(--surface);
+
+            color: var(--text);
+
+            box-shadow: var(--shadow-medium);
+
+            font-size: 11px;
+
+            animation:
+                toast-in .18s ease;
+        }
+
+        .toast.success {
+            border-left: 3px solid var(--success);
+        }
+
+        .toast.error {
+            border-left: 3px solid var(--danger);
+        }
+
+        @keyframes toast-in {
+            from {
+                opacity: 0;
+                transform: translateY(5px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* =========================================================
+           SCROLLBARS
+        ========================================================= */
+
+        ::-webkit-scrollbar {
+            width: 7px;
+            height: 7px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(90, 80, 70, .17);
+
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(90, 80, 70, .27);
+        }
+
+        /* =========================================================
+           RESPONSIVE
+        ========================================================= */
+
+        @media (max-width: 850px) {
+
+            .sidebar {
+                position: fixed;
+
+                left: 0;
+                top: 0;
+
+                transform: translateX(-100%);
+
+                box-shadow: 16px 0 50px rgba(30, 25, 20, .13);
+
+                transition:
+                    transform .2s ease;
+            }
+
+            .sidebar.mobile-open {
+                transform: translateX(0);
+            }
+
+            .mobile-menu {
+                display: flex;
+            }
+
+            .topbar {
+                height: 59px;
+                min-height: 59px;
+
+                padding: 0 11px;
+            }
+
+            .messages {
+                padding: 18px 15px 16px;
+            }
+
+            .composer-area {
+                padding: 7px 10px 13px;
+            }
+
+            .welcome {
+                padding-bottom: 30px;
+            }
+
+            .welcome-title {
+                font-size: 30px;
+            }
+
+            .welcome-description {
+                font-size: 13px;
+            }
+
+            .suggestions {
+                grid-template-columns: 1fr;
+
+                margin-top: 24px;
+            }
+
+            .message-inner,
+            .message.user .message-inner {
+                max-width: 88%;
+            }
+
+            .admin-panel {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 500px) {
+
+            .topbar-right .top-icon {
+                display: none;
+            }
+
+            .model-menu {
+                width: calc(100vw - 25px);
+
+                max-width: 310px;
+            }
+
+            .welcome-title {
+                font-size: 27px;
+            }
+
+            .welcome-description {
+                max-width: 330px;
+            }
+
+            .admin-content {
+                padding: 15px;
+            }
+
+            .admin-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .composer {
+                min-height: 64px;
+
+                border-radius: 17px;
+            }
+
+            .message-input {
+                font-size: 14px;
+            }
+
+            .composer-footer {
+                display: none;
+            }
+        }
+    </style>
 </head>
 
 <body>
 
+<!-- =============================================================
+     SVG ICON DEFINITIONS
+============================================================= -->
+
+<svg width="0" height="0" style="position:absolute">
+    <defs>
+
+        <symbol id="icon-search" viewBox="0 0 24 24">
+            <circle cx="11" cy="11" r="6.5"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"/>
+            <path d="M16 16L21 21"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"/>
+        </symbol>
+
+        <symbol id="icon-plus" viewBox="0 0 24 24">
+            <path d="M12 5V19M5 12H19"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"/>
+        </symbol>
+
+        <symbol id="icon-chevron" viewBox="0 0 24 24">
+            <path d="M7 9L12 14L17 9"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"/>
+        </symbol>
+
+        <symbol id="icon-menu" viewBox="0 0 24 24">
+            <path d="M4 7H20M4 12H20M4 17H20"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"/>
+        </symbol>
+
+        <symbol id="icon-settings" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="3"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.7"/>
+            <path d="M19 13.2L20.3 14.2L18.7 17L17.1 16.4
+                     C16.5 16.9 15.8 17.3 15 17.6L14.7 19.3
+                     H11.3L11 17.6C10.2 17.3 9.5 16.9 8.9 16.4
+                     L7.3 17L5.7 14.2L7 13.2
+                     C6.9 12.8 6.8 12.4 6.8 12
+                     C6.8 11.6 6.9 11.2 7 10.8
+                     L5.7 9.8L7.3 7L8.9 7.6
+                     C9.5 7.1 10.2 6.7 11 6.4
+                     L11.3 4.7H14.7L15 6.4
+                     C15.8 6.7 16.5 7.1 17.1 7.6
+                     L18.7 7L20.3 9.8L19 10.8
+                     C19.1 11.2 19.2 11.6 19.2 12
+                     C19.2 12.4 19.1 12.8 19 13.2Z"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.25"
+                  stroke-linejoin="round"/>
+        </symbol>
+
+        <symbol id="icon-dots" viewBox="0 0 24 24">
+            <circle cx="5" cy="12" r="1.5" fill="currentColor"/>
+            <circle cx="12" cy="12" r="1.5" fill="currentColor"/>
+            <circle cx="19" cy="12" r="1.5" fill="currentColor"/>
+        </symbol>
+
+        <symbol id="icon-edit" viewBox="0 0 24 24">
+            <path d="M5 19L5.7 15.2L15.8 5.1
+                     C16.5 4.4 17.7 4.4 18.4 5.1
+                     L18.9 5.6C19.6 6.3 19.6 7.5 18.9 8.2
+                     L8.8 18.3L5 19Z"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.6"
+                  stroke-linejoin="round"/>
+            <path d="M14.7 6.2L17.8 9.3"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.6"/>
+        </symbol>
+
+        <symbol id="icon-trash" viewBox="0 0 24 24">
+            <path d="M5 7H19"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.6"
+                  stroke-linecap="round"/>
+            <path d="M9 7V5H15V7"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.6"
+                  stroke-linejoin="round"/>
+            <path d="M7 7L7.8 19H16.2L17 7"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.6"
+                  stroke-linejoin="round"/>
+            <path d="M10 10.5V16M14 10.5V16"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.4"
+                  stroke-linecap="round"/>
+        </symbol>
+
+        <symbol id="icon-paperclip" viewBox="0 0 24 24">
+            <path d="M8.5 12.5L14.8 6.2
+                     C16.3 4.7 18.7 4.7 20.2 6.2
+                     C21.7 7.7 21.7 10.1 20.2 11.6
+                     L11.2 20.6
+                     C8.9 22.9 5.2 22.9 2.9 20.6
+                     C.6 18.3 .6 14.6 2.9 12.3
+                     L11.5 3.7"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.6"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"/>
+        </symbol>
+
+        <symbol id="icon-send" viewBox="0 0 24 24">
+            <path d="M4 11.5L20 4L15.2 20L11.8 13.2L4 11.5Z"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.7"
+                  stroke-linejoin="round"/>
+            <path d="M11.8 13.2L20 4"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.7"
+                  stroke-linecap="round"/>
+        </symbol>
+
+        <symbol id="icon-copy" viewBox="0 0 24 24">
+            <rect x="8" y="8" width="11" height="11"
+                  rx="2"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.6"/>
+            <path d="M16 8V6C16 4.9 15.1 4 14 4H6C4.9 4 4 4.9 4 6V14C4 15.1 4.9 16 6 16H8"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.6"/>
+        </symbol>
+
+        <symbol id="icon-close" viewBox="0 0 24 24">
+            <path d="M6 6L18 18M18 6L6 18"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.7"
+                  stroke-linecap="round"/>
+        </symbol>
+
+        <symbol id="icon-shield" viewBox="0 0 24 24">
+            <path d="M12 3L19 6V11.5C19 16 16.1 19.2 12 21
+                     C7.9 19.2 5 16 5 11.5V6L12 3Z"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.6"
+                  stroke-linejoin="round"/>
+            <path d="M9 12L11 14L15.5 9.5"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.6"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"/>
+        </symbol>
+
+        <symbol id="icon-users" viewBox="0 0 24 24">
+            <circle cx="9" cy="8" r="3"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.6"/>
+            <path d="M3.5 19C3.8 15.5 5.5 13.5 9 13.5
+                     C12.5 13.5 14.2 15.5 14.5 19"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.6"
+                  stroke-linecap="round"/>
+            <path d="M15 6.2C17.3 6.2 18.7 7.5 18.7 9.5
+                     C18.7 11 17.8 12 16.5 12.5"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.4"
+                  stroke-linecap="round"/>
+            <path d="M16 14C18.8 14.2 20.2 15.8 20.5 18"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.4"
+                  stroke-linecap="round"/>
+        </symbol>
+
+        <symbol id="icon-model" viewBox="0 0 24 24">
+            <rect x="4" y="5" width="16" height="14"
+                  rx="3"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.6"/>
+            <path d="M8 9H16M8 12H16M8 15H13"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="round"/>
+        </symbol>
+
+        <symbol id="icon-chart" viewBox="0 0 24 24">
+            <path d="M5 19V11M12 19V5M19 19V8"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"/>
+        </symbol>
+
+        <symbol id="icon-database" viewBox="0 0 24 24">
+            <ellipse cx="12" cy="6" rx="7" ry="3"
+                     fill="none"
+                     stroke="currentColor"
+                     stroke-width="1.5"/>
+            <path d="M5 6V12C5 13.7 8.1 15 12 15
+                     C15.9 15 19 13.7 19 12V6"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"/>
+            <path d="M5 12V18C5 19.7 8.1 21 12 21
+                     C15.9 21 19 19.7 19 18V12"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"/>
+        </symbol>
+
+        <symbol id="icon-arrow" viewBox="0 0 24 24">
+            <path d="M5 12H19M13 6L19 12L13 18"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.7"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"/>
+        </symbol>
+
+    </defs>
+</svg>
+
+
 <div class="app">
 
-```
-<!-- SIDEBAR -->
+    <!-- =========================================================
+         SIDEBAR
+    ========================================================== -->
 
-<aside class="sidebar" id="sidebar">
+    <aside class="sidebar" id="sidebar">
 
-    <div class="sidebar-header">
+        <div class="sidebar-header">
 
-        <div class="brand">
-            <div class="brand-mark">AI</div>
-            <span>AI Chat</span>
+            <div class="brand">
+
+                <div class="brand-logo">
+                    AI
+                </div>
+
+                <div class="brand-name">
+                    AI Chat
+                </div>
+
+            </div>
+
+            <button
+                class="icon-button"
+                id="newChatButton"
+                title="Новый чат"
+                aria-label="Новый чат"
+            >
+                <svg>
+                    <use href="#icon-plus"></use>
+                </svg>
+            </button>
+
         </div>
 
-        <button
-            class="sidebar-new"
-            id="newChatButton"
-            title="Новый чат"
+
+        <div class="search-box">
+
+            <svg>
+                <use href="#icon-search"></use>
+            </svg>
+
+            <input
+                id="searchInput"
+                class="search-input"
+                type="text"
+                placeholder="Поиск по чатам"
+                autocomplete="off"
+            >
+
+        </div>
+
+
+        <div class="history-header">
+
+            <div class="history-title">
+                История
+            </div>
+
+        </div>
+
+
+        <div
+            class="history-list"
+            id="historyList"
         >
-            +
-        </button>
 
-    </div>
+            <div class="history-empty">
+                История чатов появится здесь
+            </div>
 
-
-    <div class="search">
-
-        <span class="search-icon">⌕</span>
-
-        <input
-            id="searchInput"
-            type="text"
-            placeholder="Поиск"
-        >
-
-    </div>
+        </div>
 
 
-    <div class="history-label">
-        Чаты
-    </div>
+        <div class="sidebar-bottom">
+
+            <button
+                class="account-button"
+                id="accountButton"
+            >
+
+                <div
+                    class="avatar"
+                    id="sidebarAvatar"
+                >
+                    Т
+                </div>
+
+                <div class="account-details">
+
+                    <div
+                        class="account-name"
+                        id="sidebarUserName"
+                    >
+                        Пользователь
+                    </div>
+
+                    <div
+                        class="account-role"
+                        id="sidebarUserRole"
+                    >
+                        Аккаунт
+                    </div>
+
+                </div>
+
+                <div class="account-arrow">
+
+                    <svg>
+                        <use href="#icon-chevron"></use>
+                    </svg>
+
+                </div>
+
+            </button>
+
+        </div>
+
+    </aside>
 
 
-    <div
-        class="chat-list"
-        id="chatList"
+    <!-- =========================================================
+         MAIN
+    ========================================================== -->
+
+    <main class="main">
+
+        <header class="topbar">
+
+            <div class="topbar-left">
+
+                <button
+                    class="mobile-menu"
+                    id="mobileMenuButton"
+                    aria-label="Меню"
+                >
+                    <svg>
+                        <use href="#icon-menu"></use>
+                    </svg>
+                </button>
+
+
+                <div
+                    class="model-selector"
+                    id="modelSelector"
+                >
+
+                    <button
+                        class="model-button"
+                        id="modelButton"
+                    >
+
+                        <span id="selectedModelName">
+                            Выберите модель
+                        </span>
+
+                        <svg>
+                            <use href="#icon-chevron"></use>
+                        </svg>
+
+                    </button>
+
+
+                    <div
+                        class="model-menu"
+                        id="modelMenu"
+                    >
+
+                        <div class="model-empty">
+                            Загрузка моделей
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="topbar-right">
+
+                <button
+                    class="top-icon"
+                    id="adminButton"
+                    title="Администрирование"
+                    aria-label="Администрирование"
+                >
+                    <svg>
+                        <use href="#icon-shield"></use>
+                    </svg>
+                </button>
+
+                <button
+                    class="top-icon"
+                    id="settingsButton"
+                    title="Настройки"
+                    aria-label="Настройки"
+                >
+                    <svg>
+                        <use href="#icon-settings"></use>
+                    </svg>
+                </button>
+
+                <div
+                    class="top-avatar"
+                    id="topAvatar"
+                >
+                    Т
+                </div>
+
+            </div>
+
+        </header>
+
+
+        <section class="chat-area">
+
+            <div
+                class="messages"
+                id="messages"
+            >
+
+                <div
+                    class="welcome"
+                    id="welcome"
+                >
+
+                    <h1 class="welcome-title">
+                        Чем могу помочь?
+                    </h1>
+
+                    <p class="welcome-description">
+                        Задайте вопрос, загрузите файл или начните новый разговор
+                    </p>
+
+
+                    <div class="suggestions">
+
+                        <button
+                            class="suggestion"
+                            data-prompt="Помоги мне разобраться в этой теме"
+                        >
+
+                            <div class="suggestion-title">
+                                Разобраться в теме
+                            </div>
+
+                            <div class="suggestion-description">
+                                Объяснить сложный материал простыми словами
+                            </div>
+
+                        </button>
+
+
+                        <button
+                            class="suggestion"
+                            data-prompt="Помоги мне написать хороший текст"
+                        >
+
+                            <div class="suggestion-title">
+                                Написать текст
+                            </div>
+
+                            <div class="suggestion-description">
+                                Создать или улучшить текст
+                            </div>
+
+                        </button>
+
+
+                        <button
+                            class="suggestion"
+                            data-prompt="Проанализируй этот материал"
+                        >
+
+                            <div class="suggestion-title">
+                                Проанализировать
+                            </div>
+
+                            <div class="suggestion-description">
+                                Найти главное и объяснить результат
+                            </div>
+
+                        </button>
+
+
+                        <button
+                            class="suggestion"
+                            data-prompt="Помоги мне написать код"
+                        >
+
+                            <div class="suggestion-title">
+                                Написать код
+                            </div>
+
+                            <div class="suggestion-description">
+                                Создать, объяснить или исправить код
+                            </div>
+
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="composer-area">
+
+                <div class="composer">
+
+                    <div class="composer-tools">
+
+                        <button
+                            class="composer-button"
+                            id="attachButton"
+                            title="Прикрепить файл"
+                            aria-label="Прикрепить файл"
+                        >
+
+                            <svg>
+                                <use href="#icon-paperclip"></use>
+                            </svg>
+
+                        </button>
+
+                        <input
+                            id="fileInput"
+                            type="file"
+                            hidden
+                            multiple
+                        >
+
+                    </div>
+
+
+                    <textarea
+                        id="messageInput"
+                        class="message-input"
+                        rows="1"
+                        placeholder="Напишите сообщение"
+                    ></textarea>
+
+
+                    <button
+                        id="sendButton"
+                        class="send-button"
+                        disabled
+                        title="Отправить"
+                        aria-label="Отправить"
+                    >
+
+                        <svg>
+                            <use href="#icon-send"></use>
+                        </svg>
+
+                    </button>
+
+                </div>
+
+
+                <div class="composer-footer">
+                    AI может допускать ошибки. Проверяйте важную информацию.
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+
+<!-- =============================================================
+     OVERLAY
+============================================================= -->
+
+<div
+    class="overlay"
+    id="overlay"
+></div>
+
+
+<!-- =============================================================
+     CONTEXT MENU
+============================================================= -->
+
+<div
+    class="context-menu"
+    id="contextMenu"
+>
+
+    <button
+        class="context-item"
+        id="renameChatButton"
     >
 
-        <!--
-            История будет загружаться
-            с backend.
-        -->
+        <svg>
+            <use href="#icon-edit"></use>
+        </svg>
 
-        <button class="chat-item active">
-            <span class="chat-title">
-                Новый разговор
-            </span>
-        </button>
+        Переименовать
+
+    </button>
+
+
+    <button
+        class="context-item danger"
+        id="deleteChatButton"
+    >
+
+        <svg>
+            <use href="#icon-trash"></use>
+        </svg>
+
+        Удалить чат
+
+    </button>
+
+</div>
+
+
+<!-- =============================================================
+     GENERAL MODAL
+============================================================= -->
+
+<div
+    class="modal-layer"
+    id="modalLayer"
+>
+
+    <div
+        class="modal"
+        id="modal"
+    >
+
+        <div class="modal-header">
+
+            <div>
+
+                <h2
+                    class="modal-title"
+                    id="modalTitle"
+                >
+                    Настройки
+                </h2>
+
+                <p
+                    class="modal-description"
+                    id="modalDescription"
+                ></p>
+
+            </div>
+
+
+            <button
+                class="modal-close"
+                id="modalClose"
+                aria-label="Закрыть"
+            >
+
+                <svg>
+                    <use href="#icon-close"></use>
+                </svg>
+
+            </button>
+
+        </div>
+
+
+        <div id="modalBody"></div>
 
     </div>
 
+</div>
 
-    <div class="sidebar-bottom">
 
-        <button class="sidebar-account">
+<!-- =============================================================
+     ADMIN PANEL
+============================================================= -->
 
-            <div class="avatar">
-                Т
+<aside
+    class="admin-panel"
+    id="adminPanel"
+>
+
+    <header class="admin-header">
+
+        <div class="admin-heading">
+
+            <div class="admin-heading-icon">
+
+                <svg>
+                    <use href="#icon-shield"></use>
+                </svg>
+
             </div>
 
-            <div class="account-info">
+            <h2 class="admin-title">
+                Администрирование
+            </h2>
 
-                <div class="account-name">
-                    Пользователь
-                </div>
+        </div>
 
-                <div class="account-role">
-                    Аккаунт
-                </div>
 
-            </div>
+        <button
+            class="modal-close"
+            id="adminClose"
+            aria-label="Закрыть"
+        >
+
+            <svg>
+                <use href="#icon-close"></use>
+            </svg>
 
         </button>
+
+    </header>
+
+
+    <div class="admin-content">
+
+        <div class="admin-tabs">
+
+            <button
+                class="admin-tab active"
+                data-admin-tab="analytics"
+            >
+                Аналитика
+            </button>
+
+            <button
+                class="admin-tab"
+                data-admin-tab="models"
+            >
+                Модели
+            </button>
+
+            <button
+                class="admin-tab"
+                data-admin-tab="users"
+            >
+                Пользователи
+            </button>
+
+            <button
+                class="admin-tab"
+                data-admin-tab="connections"
+            >
+                API
+            </button>
+
+        </div>
+
+
+        <!-- ANALYTICS -->
+
+        <section
+            class="admin-section active"
+            id="adminAnalytics"
+        >
+
+            <div class="admin-section-heading">
+
+                <h3 class="admin-section-title">
+                    Аналитика
+                </h3>
+
+            </div>
+
+
+            <div class="admin-grid">
+
+                <div class="stat-card">
+
+                    <div class="stat-label">
+                        Пользователи
+                    </div>
+
+                    <div
+                        class="stat-value"
+                        id="statUsers"
+                    >
+                        0
+                    </div>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <div class="stat-label">
+                        Чаты
+                    </div>
+
+                    <div
+                        class="stat-value"
+                        id="statChats"
+                    >
+                        0
+                    </div>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <div class="stat-label">
+                        Сообщения
+                    </div>
+
+                    <div
+                        class="stat-value"
+                        id="statMessages"
+                    >
+                        0
+                    </div>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <div class="stat-label">
+                        Активные модели
+                    </div>
+
+                    <div
+                        class="stat-value"
+                        id="statModels"
+                    >
+                        0
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="admin-section-heading">
+
+                <h3 class="admin-section-title">
+                    Система
+                </h3>
+
+            </div>
+
+
+            <div class="admin-list">
+
+                <div class="admin-list-item">
+
+                    <div class="admin-list-main">
+
+                        <div class="admin-list-name">
+                            Backend
+                        </div>
+
+                        <div class="admin-list-meta">
+                            API сервера
+                        </div>
+
+                    </div>
+
+                    <span
+                        class="status-badge"
+                        id="backendStatus"
+                    >
+                        <span class="status-dot"></span>
+                        Проверка
+                    </span>
+
+                </div>
+
+
+                <div class="admin-list-item">
+
+                    <div class="admin-list-main">
+
+                        <div class="admin-list-name">
+                            База данных
+                        </div>
+
+                        <div class="admin-list-meta">
+                            Хранилище пользователей и чатов
+                        </div>
+
+                    </div>
+
+                    <span
+                        class="status-badge"
+                        id="databaseStatus"
+                    >
+                        <span class="status-dot"></span>
+                        Проверка
+                    </span>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- MODELS -->
+
+        <section
+            class="admin-section"
+            id="adminModels"
+        >
+
+            <div class="admin-section-heading">
+
+                <h3 class="admin-section-title">
+                    Модели
+                </h3>
+
+                <button
+                    class="button-primary"
+                    id="addModelButton"
+                >
+                    Добавить модель
+                </button>
+
+            </div>
+
+
+            <div
+                class="admin-list"
+                id="adminModelsList"
+            >
+
+                <div class="history-empty">
+                    Загрузка
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- USERS -->
+
+        <section
+            class="admin-section"
+            id="adminUsers"
+        >
+
+            <div class="admin-section-heading">
+
+                <h3 class="admin-section-title">
+                    Пользователи
+                </h3>
+
+            </div>
+
+
+            <div
+                class="admin-list"
+                id="adminUsersList"
+            >
+
+                <div class="history-empty">
+                    Загрузка
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- CONNECTIONS -->
+
+        <section
+            class="admin-section"
+            id="adminConnections"
+        >
+
+            <div class="admin-section-heading">
+
+                <h3 class="admin-section-title">
+                    API-подключения
+                </h3>
+
+                <button
+                    class="button-primary"
+                    id="addConnectionButton"
+                >
+                    Добавить API
+                </button>
+
+            </div>
+
+
+            <div
+                class="admin-list"
+                id="adminConnectionsList"
+            >
+
+                <div class="history-empty">
+                    API-подключения будут отображаться здесь
+                </div>
+
+            </div>
+
+        </section>
 
     </div>
 
 </aside>
 
 
-<!-- MAIN -->
+<!-- =============================================================
+     TOAST
+============================================================= -->
 
-<main class="main">
+<div
+    class="toast-container"
+    id="toastContainer"
+></div>
 
-    <!-- TOPBAR -->
-
-    <header class="topbar">
-
-        <div class="topbar-left">
-
-            <button
-                class="mobile-menu"
-                id="mobileMenuButton"
-                aria-label="Открыть меню"
-            >
-                ☰
-            </button>
-
-
-            <div
-                class="model-selector"
-                id="modelSelector"
-            >
-
-                <button
-                    class="model-button"
-                    id="modelButton"
-                >
-
-                    <span id="selectedModel">
-                        Выберите модель
-                    </span>
-
-                    <span class="model-chevron">
-                        ▼
-                    </span>
-
-                </button>
-
-
-                <div
-                    class="model-menu"
-                    id="modelMenu"
-                >
-
-                    <!--
-                        Модели будут добавляться
-                        динамически через backend.
-                    -->
-
-                </div>
-
-            </div>
-
-        </div>
-
-
-        <button class="top-user">
-            Т
-        </button>
-
-    </header>
-
-
-    <!-- CHAT -->
-
-    <section class="chat">
-
-        <div
-            class="messages"
-            id="messages"
-        >
-
-            <div
-                class="welcome"
-                id="welcome"
-            >
-
-                <h1 class="welcome-title">
-                    Чем могу помочь?
-                </h1>
-
-                <p class="welcome-subtitle">
-                    Задайте вопрос, загрузите файл или начните новый разговор
-                </p>
-
-            </div>
-
-        </div>
-
-
-        <!-- COMPOSER -->
-
-        <div class="composer-area">
-
-            <div class="composer">
-
-                <button
-                    class="attach-button"
-                    id="attachButton"
-                    title="Прикрепить файл"
-                >
-                    +
-                </button>
-
-
-                <textarea
-                    id="messageInput"
-                    class="message-input"
-                    rows="1"
-                    placeholder="Напишите сообщение..."
-                ></textarea>
-
-
-                <button
-                    id="sendButton"
-                    class="send-button"
-                    disabled
-                    title="Отправить"
-                >
-                    ↑
-                </button>
-
-            </div>
-
-
-            <div class="composer-note">
-                AI может допускать ошибки. Проверяйте важную информацию.
-            </div>
-
-        </div>
-
-    </section>
-
-</main>
-```
-
-</div>
 
 <script>
 
-    /*
-     * ==========================================
-     * FRONTEND STATE
-     * ==========================================
-     *
-     * Здесь специально НЕТ API-ключей.
-     *
-     * После создания backend:
-     *
-     * GET  /api/models
-     * POST /api/chats
-     * POST /api/chat/completions
-     *
-     * API keys будут храниться только
-     * на сервере.
-     */
+    /* ============================================================
+       STATE
+    ============================================================ */
 
-    let models = [];
+    const state = {
 
-    let selectedModelId = null;
+        user: null,
 
+        models: [],
+
+        selectedModel: null,
+
+        chats: [],
+
+        currentChatId: null,
+
+        currentMessages: [],
+
+        selectedFiles: [],
+
+        contextChatId: null,
+
+        isSending: false
+
+    };
+
+
+    /* ============================================================
+       ELEMENTS
+    ============================================================ */
+
+    const sidebar =
+        document.getElementById("sidebar");
+
+    const messages =
+        document.getElementById("messages");
+
+    const welcome =
+        document.getElementById("welcome");
+
+    const messageInput =
+        document.getElementById("messageInput");
+
+    const sendButton =
+        document.getElementById("sendButton");
 
     const modelSelector =
         document.getElementById("modelSelector");
@@ -1130,189 +3276,397 @@
     const modelMenu =
         document.getElementById("modelMenu");
 
-    const selectedModel =
-        document.getElementById("selectedModel");
+    const selectedModelName =
+        document.getElementById("selectedModelName");
 
-    const messageInput =
-        document.getElementById("messageInput");
+    const historyList =
+        document.getElementById("historyList");
 
-    const sendButton =
-        document.getElementById("sendButton");
+    const searchInput =
+        document.getElementById("searchInput");
 
-    const messages =
-        document.getElementById("messages");
+    const fileInput =
+        document.getElementById("fileInput");
 
-    const sidebar =
-        document.getElementById("sidebar");
+    const overlay =
+        document.getElementById("overlay");
+
+    const contextMenu =
+        document.getElementById("contextMenu");
+
+    const modalLayer =
+        document.getElementById("modalLayer");
+
+    const modalTitle =
+        document.getElementById("modalTitle");
+
+    const modalDescription =
+        document.getElementById("modalDescription");
+
+    const modalBody =
+        document.getElementById("modalBody");
+
+    const adminPanel =
+        document.getElementById("adminPanel");
 
 
-    /*
-     * ==========================================
-     * LOAD MODELS
-     * ==========================================
-     *
-     * В будущем здесь будет:
-     *
-     * fetch("/api/models")
-     *
-     * Пока оставляем пустой список.
-     */
+    /* ============================================================
+       API HELPER
+    ============================================================ */
+
+    async function api(
+        url,
+        options = {}
+    ) {
+
+        const response =
+            await fetch(
+                url,
+                {
+                    credentials: "include",
+                    ...options,
+                    headers: {
+                        "Content-Type": "application/json",
+                        ...(options.headers || {})
+                    }
+                }
+            );
+
+
+        if (
+            response.status === 401 ||
+            response.status === 403
+        ) {
+
+            throw new Error(
+                "Нет доступа"
+            );
+
+        }
+
+
+        const contentType =
+            response.headers.get(
+                "content-type"
+            ) || "";
+
+
+        if (
+            contentType.includes(
+                "application/json"
+            )
+        ) {
+
+            const data =
+                await response.json();
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    data.detail ||
+                    data.message ||
+                    "Ошибка сервера"
+                );
+
+            }
+
+            return data;
+
+        }
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                "Ошибка сервера"
+            );
+
+        }
+
+
+        return response;
+
+    }
+
+
+    /* ============================================================
+       LOAD USER
+    ============================================================ */
+
+    async function loadUser() {
+
+        try {
+
+            const user =
+                await api(
+                    "/api/auth/me"
+                );
+
+
+            state.user =
+                user;
+
+
+            renderUser();
+
+        } catch {
+
+            state.user = null;
+
+        }
+
+    }
+
+
+    function renderUser() {
+
+        if (!state.user) {
+            return;
+        }
+
+
+        const name =
+            state.user.name ||
+            state.user.username ||
+            state.user.email ||
+            "Пользователь";
+
+
+        const initial =
+            name
+                .trim()
+                .charAt(0)
+                .toUpperCase();
+
+
+        document
+            .getElementById("sidebarUserName")
+            .textContent =
+            name;
+
+
+        document
+            .getElementById("sidebarAvatar")
+            .textContent =
+            initial;
+
+
+        document
+            .getElementById("topAvatar")
+            .textContent =
+            initial;
+
+
+        document
+            .getElementById("sidebarUserRole")
+            .textContent =
+            state.user.is_admin
+                ? "Администратор"
+                : "Пользователь";
+
+
+        document
+            .getElementById("adminButton")
+            .classList.toggle(
+                "hidden",
+                !state.user.is_admin
+            );
+
+    }
+
+
+    /* ============================================================
+       MODELS
+    ============================================================ */
 
     async function loadModels() {
 
         try {
 
-            const response =
-                await fetch("/api/models");
+            const data =
+                await api(
+                    "/api/models"
+                );
 
-            if (!response.ok) {
-                throw new Error("Models API unavailable");
-            }
 
-            models = await response.json();
+            state.models =
+                Array.isArray(data)
+                    ? data
+                    : data.models || [];
+
 
             renderModels();
 
+
         } catch (error) {
 
-            /*
-             * Backend ещё не подключён.
-             * Никаких выдуманных моделей сюда
-             * специально не добавляем.
-             */
+            state.models = [];
 
-            modelMenu.innerHTML = `
-                <div style="
-                    padding: 12px;
-                    color: #77716a;
-                    font-size: 12px;
-                ">
-                    Модели пока не настроены
-                </div>
-            `;
+            renderModels();
+
+
+            showToast(
+                "Не удалось загрузить модели",
+                "error"
+            );
 
         }
 
     }
 
-
-    /*
-     * ==========================================
-     * RENDER MODELS
-     * ==========================================
-     */
 
     function renderModels() {
 
         modelMenu.innerHTML = "";
 
-        if (!models.length) {
+
+        if (!state.models.length) {
 
             modelMenu.innerHTML = `
-                <div style="
-                    padding: 12px;
-                    color: #77716a;
-                    font-size: 12px;
-                ">
-                    Нет доступных моделей
+                <div class="model-empty">
+                    Модели пока не добавлены администратором
                 </div>
             `;
 
+            selectedModelName.textContent =
+                "Модель не выбрана";
+
+            state.selectedModel =
+                null;
+
             return;
+
         }
 
 
-        models.forEach(model => {
+        state.models.forEach(
+            model => {
 
-            const button =
-                document.createElement("button");
-
-            button.className =
-                "model-option";
-
-            button.dataset.id =
-                model.id;
+                const button =
+                    document.createElement(
+                        "button"
+                    );
 
 
-            button.innerHTML = `
+                button.className =
+                    "model-option";
 
-                <span class="model-option-info">
 
-                    <span class="model-option-name">
-                        ${escapeHtml(model.name)}
+                if (
+                    state.selectedModel &&
+                    state.selectedModel.id === model.id
+                ) {
+
+                    button.classList.add(
+                        "selected"
+                    );
+
+                }
+
+
+                button.innerHTML = `
+
+                    <span
+                        class="model-status ${
+                            model.enabled === false
+                                ? "offline"
+                                : ""
+                        }"
+                    ></span>
+
+                    <span class="model-option-info">
+
+                        <span class="model-option-name">
+                            ${escapeHtml(
+                                model.name ||
+                                model.id
+                            )}
+                        </span>
+
+                        <span class="model-option-description">
+                            ${escapeHtml(
+                                model.description ||
+                                model.provider ||
+                                model.id ||
+                                ""
+                            )}
+                        </span>
+
                     </span>
 
-                    <span class="model-option-description">
-                        ${escapeHtml(model.description || "")}
-                    </span>
-
-                </span>
-
-                <span class="model-check">
-                    ✓
-                </span>
-            `;
+                `;
 
 
-            button.addEventListener(
-                "click",
-                () => selectModel(model.id)
+                button.addEventListener(
+                    "click",
+                    () => {
+
+                        selectModel(
+                            model
+                        );
+
+                    }
+                );
+
+
+                modelMenu.appendChild(
+                    button
+                );
+
+            }
+        );
+
+
+        if (
+            !state.selectedModel &&
+            state.models.length
+        ) {
+
+            const first =
+                state.models.find(
+                    model =>
+                        model.enabled !== false
+                ) ||
+                state.models[0];
+
+
+            selectModel(
+                first
             );
 
-
-            modelMenu.appendChild(button);
-
-        });
+        }
 
     }
 
 
-    /*
-     * ==========================================
-     * SELECT MODEL
-     * ==========================================
-     */
-
-    function selectModel(modelId) {
-
-        const model =
-            models.find(
-                item => item.id === modelId
-            );
+    function selectModel(
+        model
+    ) {
 
         if (!model) {
             return;
         }
 
-        selectedModelId =
+
+        state.selectedModel =
+            model;
+
+
+        selectedModelName.textContent =
+            model.name ||
             model.id;
 
-        selectedModel.textContent =
-            model.name;
+
+        modelSelector.classList.remove(
+            "open"
+        );
 
 
-        document
-            .querySelectorAll(".model-option")
-            .forEach(option => {
-
-                option.classList.toggle(
-                    "selected",
-                    option.dataset.id === modelId
-                );
-
-            });
-
-
-        modelSelector.classList.remove("open");
+        renderModels();
 
     }
 
-
-    /*
-     * ==========================================
-     * MODEL MENU
-     * ==========================================
-     */
 
     modelButton.addEventListener(
         "click",
@@ -1320,7 +3674,9 @@
 
             event.stopPropagation();
 
-            modelSelector.classList.toggle("open");
+            modelSelector.classList.toggle(
+                "open"
+            );
 
         }
     );
@@ -1330,9 +3686,26 @@
         "click",
         event => {
 
-            if (!modelSelector.contains(event.target)) {
+            if (
+                !modelSelector.contains(
+                    event.target
+                )
+            ) {
 
-                modelSelector.classList.remove("open");
+                modelSelector.classList.remove(
+                    "open"
+                );
+
+            }
+
+
+            if (
+                !contextMenu.contains(
+                    event.target
+                )
+            ) {
+
+                closeContextMenu();
 
             }
 
@@ -1340,96 +3713,934 @@
     );
 
 
-    /*
-     * ==========================================
-     * INPUT
-     * ==========================================
-     */
+    /* ============================================================
+       CHATS
+    ============================================================ */
 
-    function updateSendButton() {
+    async function loadChats() {
 
-        sendButton.disabled =
-            !messageInput.value.trim();
+        try {
+
+            const data =
+                await api(
+                    "/api/chats"
+                );
+
+
+            state.chats =
+                Array.isArray(data)
+                    ? data
+                    : data.chats || [];
+
+
+            renderChats();
+
+        } catch {
+
+            state.chats = [];
+
+            renderChats();
+
+        }
 
     }
 
 
-    messageInput.addEventListener(
-        "input",
-        function () {
+    function renderChats(
+        filter = ""
+    ) {
 
-            updateSendButton();
+        historyList.innerHTML = "";
 
-            this.style.height =
-                "auto";
 
-            this.style.height =
-                Math.min(
-                    this.scrollHeight,
-                    180
-                ) + "px";
+        const normalized =
+            filter
+                .trim()
+                .toLowerCase();
+
+
+        const filtered =
+            state.chats.filter(
+                chat => {
+
+                    const title =
+                        (
+                            chat.title ||
+                            "Новый чат"
+                        )
+                        .toLowerCase();
+
+
+                    return !normalized ||
+                        title.includes(
+                            normalized
+                        );
+
+                }
+            );
+
+
+        if (!filtered.length) {
+
+            historyList.innerHTML = `
+                <div class="history-empty">
+                    ${
+                        normalized
+                            ? "Ничего не найдено"
+                            : "История чатов пока пуста"
+                    }
+                </div>
+            `;
+
+            return;
 
         }
-    );
 
 
-    /*
-     * ==========================================
-     * SEND
-     * ==========================================
-     */
+        const groups = {
+            today: [],
+            yesterday: [],
+            older: []
+        };
+
+
+        filtered.forEach(
+            chat => {
+
+                const date =
+                    chat.updated_at ||
+                    chat.created_at;
+
+
+                const category =
+                    getDateCategory(
+                        date
+                    );
+
+
+                groups[
+                    category
+                ].push(
+                    chat
+                );
+
+            }
+        );
+
+
+        const titles = {
+            today: "Сегодня",
+            yesterday: "Вчера",
+            older: "Ранее"
+        };
+
+
+        Object.keys(groups)
+            .forEach(
+                key => {
+
+                    if (
+                        !groups[key].length
+                    ) {
+
+                        return;
+
+                    }
+
+
+                    const group =
+                        document.createElement(
+                            "div"
+                        );
+
+
+                    group.className =
+                        "history-group";
+
+
+                    group.innerHTML = `
+                        <div class="history-group-title">
+                            ${titles[key]}
+                        </div>
+                    `;
+
+
+                    groups[key].forEach(
+                        chat => {
+
+                            group.appendChild(
+                                createChatRow(
+                                    chat
+                                )
+                            );
+
+                        }
+                    );
+
+
+                    historyList.appendChild(
+                        group
+                    );
+
+                }
+            );
+
+    }
+
+
+    function createChatRow(
+        chat
+    ) {
+
+        const button =
+            document.createElement(
+                "button"
+            );
+
+
+        button.className =
+            "chat-row";
+
+
+        if (
+            state.currentChatId ===
+            chat.id
+        ) {
+
+            button.classList.add(
+                "active"
+            );
+
+        }
+
+
+        button.innerHTML = `
+
+            <span class="chat-row-content">
+
+                <span class="chat-row-title">
+                    ${escapeHtml(
+                        chat.title ||
+                        "Новый чат"
+                    )}
+                </span>
+
+                <span class="chat-row-meta">
+                    ${
+                        chat.message_count ||
+                        0
+                    } сообщений
+                </span>
+
+            </span>
+
+            <span
+                class="chat-row-menu"
+                aria-label="Меню"
+            >
+
+                <svg>
+                    <use href="#icon-dots"></use>
+                </svg>
+
+            </span>
+
+        `;
+
+
+        button.addEventListener(
+            "click",
+            event => {
+
+                if (
+                    event.target.closest(
+                        ".chat-row-menu"
+                    )
+                ) {
+
+                    openContextMenu(
+                        chat,
+                        event
+                    );
+
+                    return;
+
+                }
+
+
+                openChat(
+                    chat.id
+                );
+
+            }
+        );
+
+
+        return button;
+
+    }
+
+
+    async function openChat(
+        chatId
+    ) {
+
+        state.currentChatId =
+            chatId;
+
+
+        closeContextMenu();
+
+
+        try {
+
+            const data =
+                await api(
+                    `/api/chats/${encodeURIComponent(
+                        chatId
+                    )}`
+                );
+
+
+            state.currentMessages =
+                data.messages ||
+                [];
+
+
+            renderMessages();
+
+            renderChats(
+                searchInput.value
+            );
+
+
+            closeMobileSidebar();
+
+        } catch {
+
+            showToast(
+                "Не удалось открыть чат",
+                "error"
+            );
+
+        }
+
+    }
+
+
+    /* ============================================================
+       NEW CHAT
+    ============================================================ */
+
+    async function createNewChat() {
+
+        state.currentChatId =
+            null;
+
+        state.currentMessages =
+            [];
+
+        renderMessages();
+
+        renderChats(
+            searchInput.value
+        );
+
+        messageInput.focus();
+
+    }
+
+
+    document
+        .getElementById("newChatButton")
+        .addEventListener(
+            "click",
+            createNewChat
+        );
+
+
+    /* ============================================================
+       RENDER MESSAGES
+    ============================================================ */
+
+    function renderMessages() {
+
+        messages.innerHTML = "";
+
+
+        if (
+            !state.currentMessages.length
+        ) {
+
+            const welcomeElement =
+                createWelcome();
+
+
+            messages.appendChild(
+                welcomeElement
+            );
+
+
+            return;
+
+        }
+
+
+        state.currentMessages.forEach(
+            message => {
+
+                messages.appendChild(
+                    createMessageElement(
+                        message
+                    )
+                );
+
+            }
+        );
+
+
+        scrollMessagesToBottom();
+
+    }
+
+
+    function createWelcome() {
+
+        const element =
+            document.createElement(
+                "div"
+            );
+
+
+        element.className =
+            "welcome";
+
+
+        element.innerHTML = `
+
+            <h1 class="welcome-title">
+                Чем могу помочь?
+            </h1>
+
+            <p class="welcome-description">
+                Задайте вопрос, загрузите файл или начните новый разговор
+            </p>
+
+            <div class="suggestions">
+
+                <button
+                    class="suggestion"
+                    data-prompt="Помоги мне разобраться в этой теме"
+                >
+
+                    <div class="suggestion-title">
+                        Разобраться в теме
+                    </div>
+
+                    <div class="suggestion-description">
+                        Объяснить сложный материал простыми словами
+                    </div>
+
+                </button>
+
+                <button
+                    class="suggestion"
+                    data-prompt="Помоги мне написать хороший текст"
+                >
+
+                    <div class="suggestion-title">
+                        Написать текст
+                    </div>
+
+                    <div class="suggestion-description">
+                        Создать или улучшить текст
+                    </div>
+
+                </button>
+
+                <button
+                    class="suggestion"
+                    data-prompt="Проанализируй этот материал"
+                >
+
+                    <div class="suggestion-title">
+                        Проанализировать
+                    </div>
+
+                    <div class="suggestion-description">
+                        Найти главное и объяснить результат
+                    </div>
+
+                </button>
+
+                <button
+                    class="suggestion"
+                    data-prompt="Помоги мне написать код"
+                >
+
+                    <div class="suggestion-title">
+                        Написать код
+                    </div>
+
+                    <div class="suggestion-description">
+                        Создать, объяснить или исправить код
+                    </div>
+
+                </button>
+
+            </div>
+
+        `;
+
+
+        element
+            .querySelectorAll(
+                ".suggestion"
+            )
+            .forEach(
+                button => {
+
+                    button.addEventListener(
+                        "click",
+                        () => {
+
+                            messageInput.value =
+                                button.dataset.prompt;
+
+                            autoResizeInput();
+
+                            updateSendButton();
+
+                            messageInput.focus();
+
+                        }
+                    );
+
+                }
+            );
+
+
+        return element;
+
+    }
+
+
+    function createMessageElement(
+        message
+    ) {
+
+        const wrapper =
+            document.createElement(
+                "div"
+            );
+
+
+        const role =
+            message.role === "user"
+                ? "user"
+                : "assistant";
+
+
+        wrapper.className =
+            `message ${role}`;
+
+
+        const inner =
+            document.createElement(
+                "div"
+            );
+
+
+        inner.className =
+            "message-inner";
+
+
+        const roleElement =
+            document.createElement(
+                "div"
+            );
+
+
+        roleElement.className =
+            "message-role";
+
+
+        roleElement.innerHTML = `
+
+            <span class="message-role-dot">
+                ${
+                    role === "user"
+                        ? "U"
+                        : "AI"
+                }
+            </span>
+
+            <span>
+                ${
+                    role === "user"
+                        ? "Вы"
+                        : escapeHtml(
+                            state.selectedModel?.name ||
+                            "AI"
+                        )
+                }
+            </span>
+
+        `;
+
+
+        const text =
+            document.createElement(
+                "div"
+            );
+
+
+        text.className =
+            "message-text";
+
+
+        text.textContent =
+            message.content ||
+            "";
+
+
+        inner.appendChild(
+            roleElement
+        );
+
+
+        inner.appendChild(
+            text
+        );
+
+
+        const actions =
+            document.createElement(
+                "div"
+            );
+
+
+        actions.className =
+            "message-actions";
+
+
+        const copy =
+            document.createElement(
+                "button"
+            );
+
+
+        copy.className =
+            "message-action";
+
+
+        copy.title =
+            "Копировать";
+
+
+        copy.innerHTML = `
+            <svg>
+                <use href="#icon-copy"></use>
+            </svg>
+        `;
+
+
+        copy.addEventListener(
+            "click",
+            () => {
+
+                navigator.clipboard
+                    .writeText(
+                        message.content || ""
+                    )
+                    .then(
+                        () =>
+                            showToast(
+                                "Скопировано",
+                                "success"
+                            )
+                    );
+
+            }
+        );
+
+
+        actions.appendChild(
+            copy
+        );
+
+
+        inner.appendChild(
+            actions
+        );
+
+
+        wrapper.appendChild(
+            inner
+        );
+
+
+        return wrapper;
+
+    }
+
+
+    /* ============================================================
+       SEND
+    ============================================================ */
 
     async function sendMessage() {
 
+        if (
+            state.isSending
+        ) {
+
+            return;
+
+        }
+
+
         const text =
             messageInput.value.trim();
+
 
         if (!text) {
             return;
         }
 
 
-        if (welcome) {
-            welcome.remove();
+        if (
+            !state.selectedModel
+        ) {
+
+            showToast(
+                "Сначала выберите модель",
+                "error"
+            );
+
+            return;
+
         }
 
 
-        addMessage(
-            "user",
-            text
+        state.isSending =
+            true;
+
+
+        sendButton.classList.add(
+            "loading"
         );
+
+
+        sendButton.disabled =
+            true;
+
+
+        const userMessage = {
+
+            role: "user",
+
+            content: text
+
+        };
+
+
+        state.currentMessages.push(
+            userMessage
+        );
+
+
+        renderMessages();
 
 
         messageInput.value = "";
 
         messageInput.style.height =
-            "42px";
-
-        updateSendButton();
+            "44px";
 
 
-        /*
-         * В будущем:
-         *
-         * POST /api/chat/completions
-         *
-         * {
-         *     model: selectedModelId,
-         *     message: text
-         * }
-         *
-         * Backend сам выберет:
-         *
-         * Base URL
-         * API Key
-         * Model ID
-         */
+        try {
+
+            if (
+                !state.currentChatId
+            ) {
+
+                const created =
+                    await api(
+                        "/api/chats",
+                        {
+                            method: "POST",
+
+                            body: JSON.stringify({
+                                title:
+                                    generateChatTitle(
+                                        text
+                                    )
+                            })
+                        }
+                    );
 
 
-        addMessage(
-            "assistant",
-            "API ещё не подключён. Сейчас мы тестируем интерфейс."
-        );
+                state.currentChatId =
+                    created.id ||
+                    created.chat_id;
+
+            }
+
+
+            state.currentMessages =
+                state.currentMessages;
+
+
+            const assistantElement =
+                document.createElement(
+                    "div"
+                );
+
+
+            assistantElement.className =
+                "message assistant";
+
+
+            assistantElement.innerHTML = `
+
+                <div class="message-inner">
+
+                    <div class="message-role">
+
+                        <span class="message-role-dot">
+                            AI
+                        </span>
+
+                        <span>
+                            ${
+                                escapeHtml(
+                                    state.selectedModel.name ||
+                                    state.selectedModel.id
+                                )
+                            }
+                        </span>
+
+                    </div>
+
+                    <div class="message-text">
+
+                        <div class="typing">
+
+                            <span></span>
+                            <span></span>
+                            <span></span>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            `;
+
+
+            messages.appendChild(
+                assistantElement
+            );
+
+
+            scrollMessagesToBottom();
+
+
+            const response =
+                await api(
+                    "/api/chat/completions",
+                    {
+                        method: "POST",
+
+                        body: JSON.stringify({
+
+                            chat_id:
+                                state.currentChatId,
+
+                            model:
+                                state.selectedModel.id,
+
+                            message:
+                                text
+
+                        })
+                    }
+                );
+
+
+            const answer =
+                response.content ||
+                response.message ||
+                response.answer ||
+                response.choices?.[0]?.message?.content ||
+                "";
+
+
+            assistantElement
+                .querySelector(
+                    ".message-text"
+                )
+                .textContent =
+                answer;
+
+
+            state.currentMessages.push({
+
+                role: "assistant",
+
+                content: answer
+
+            });
+
+
+            await loadChats();
+
+
+            renderChats(
+                searchInput.value
+            );
+
+
+            scrollMessagesToBottom();
+
+
+        } catch (error) {
+
+            showToast(
+                error.message ||
+                "Не удалось отправить сообщение",
+                "error"
+            );
+
+
+            state.currentMessages =
+                state.currentMessages.filter(
+                    (
+                        message,
+                        index,
+                        array
+                    ) =>
+                        index !==
+                        array.length - 1
+                );
+
+
+            renderMessages();
+
+        } finally {
+
+            state.isSending =
+                false;
+
+            sendButton.classList.remove(
+                "loading"
+            );
+
+            updateSendButton();
+
+        }
 
     }
 
@@ -1451,9 +4662,7 @@
 
                 event.preventDefault();
 
-                if (!sendButton.disabled) {
-                    sendMessage();
-                }
+                sendMessage();
 
             }
 
@@ -1461,97 +4670,1663 @@
     );
 
 
-    /*
-     * ==========================================
-     * ADD MESSAGE
-     * ==========================================
-     */
+    messageInput.addEventListener(
+        "input",
+        () => {
 
-    function addMessage(
-        role,
-        text
-    ) {
+            autoResizeInput();
 
-        const message =
-            document.createElement("div");
+            updateSendButton();
 
-        message.className =
-            `message ${role}`;
+        }
+    );
 
 
-        const content =
-            document.createElement("div");
+    function updateSendButton() {
 
-        content.className =
-            "message-content";
-
-        content.textContent =
-            text;
-
-
-        message.appendChild(content);
-
-        messages.appendChild(message);
-
-
-        messages.scrollTop =
-            messages.scrollHeight;
+        sendButton.disabled =
+            state.isSending ||
+            !messageInput.value.trim();
 
     }
 
 
-    /*
-     * ==========================================
-     * NEW CHAT
-     * ==========================================
-     */
+    function autoResizeInput() {
+
+        messageInput.style.height =
+            "44px";
+
+
+        messageInput.style.height =
+            Math.min(
+                messageInput.scrollHeight,
+                190
+            ) + "px";
+
+    }
+
+
+    /* ============================================================
+       FILES
+    ============================================================ */
 
     document
-        .getElementById("newChatButton")
+        .getElementById("attachButton")
         .addEventListener(
             "click",
-            newChat
+            () => fileInput.click()
         );
 
 
-    function newChat() {
+    fileInput.addEventListener(
+        "change",
+        () => {
 
-        messages.innerHTML = `
+            state.selectedFiles =
+                Array.from(
+                    fileInput.files
+                );
 
-            <div
-                class="welcome"
-                id="welcome"
-            >
 
-                <h1 class="welcome-title">
-                    Чем могу помочь?
-                </h1>
+            if (
+                state.selectedFiles.length
+            ) {
 
-                <p class="welcome-subtitle">
-                    Задайте вопрос, загрузите файл или начните новый разговор
-                </p>
+                showToast(
+                    `Выбрано файлов: ${state.selectedFiles.length}`,
+                    "success"
+                );
 
-            </div>
-        `;
+            }
 
-        messageInput.value = "";
+        }
+    );
 
-        messageInput.style.height =
-            "42px";
 
-        updateSendButton();
+    /* ============================================================
+       SEARCH
+    ============================================================ */
+
+    searchInput.addEventListener(
+        "input",
+        () => {
+
+            renderChats(
+                searchInput.value
+            );
+
+        }
+    );
+
+
+    /* ============================================================
+       CONTEXT MENU
+    ============================================================ */
+
+    function openContextMenu(
+        chat,
+        event
+    ) {
+
+        event.preventDefault();
+        event.stopPropagation();
+
+
+        state.contextChatId =
+            chat.id;
+
+
+        const x =
+            Math.min(
+                event.clientX,
+                window.innerWidth - 205
+            );
+
+
+        const y =
+            Math.min(
+                event.clientY,
+                window.innerHeight - 95
+            );
+
+
+        contextMenu.style.left =
+            `${x}px`;
+
+
+        contextMenu.style.top =
+            `${y}px`;
+
+
+        contextMenu.classList.add(
+            "visible"
+        );
 
     }
 
 
-    /*
-     * ==========================================
-     * MOBILE
-     * ==========================================
-     */
+    function closeContextMenu() {
+
+        contextMenu.classList.remove(
+            "visible"
+        );
+
+        state.contextChatId =
+            null;
+
+    }
+
 
     document
-        .getElementById("mobileMenuButton")
+        .getElementById("renameChatButton")
+        .addEventListener(
+            "click",
+            renameCurrentChat
+        );
+
+
+    document
+        .getElementById("deleteChatButton")
+        .addEventListener(
+            "click",
+            deleteCurrentChat
+        );
+
+
+    async function renameCurrentChat() {
+
+        const chat =
+            state.chats.find(
+                item =>
+                    item.id ===
+                    state.contextChatId
+            );
+
+
+        if (!chat) {
+            return;
+        }
+
+
+        const name =
+            window.prompt(
+                "Название чата",
+                chat.title ||
+                "Новый чат"
+            );
+
+
+        closeContextMenu();
+
+
+        if (
+            !name ||
+            !name.trim()
+        ) {
+
+            return;
+
+        }
+
+
+        try {
+
+            await api(
+                `/api/chats/${encodeURIComponent(
+                    chat.id
+                )}`,
+                {
+                    method: "PATCH",
+
+                    body: JSON.stringify({
+                        title:
+                            name.trim()
+                    })
+                }
+            );
+
+
+            await loadChats();
+
+
+            showToast(
+                "Название изменено",
+                "success"
+            );
+
+        } catch {
+
+            showToast(
+                "Не удалось изменить название",
+                "error"
+            );
+
+        }
+
+    }
+
+
+    async function deleteCurrentChat() {
+
+        const chatId =
+            state.contextChatId;
+
+
+        closeContextMenu();
+
+
+        if (!chatId) {
+            return;
+        }
+
+
+        const confirmed =
+            window.confirm(
+                "Удалить этот чат?"
+            );
+
+
+        if (!confirmed) {
+            return;
+        }
+
+
+        try {
+
+            await api(
+                `/api/chats/${encodeURIComponent(
+                    chatId
+                )}`,
+                {
+                    method: "DELETE"
+                }
+            );
+
+
+            if (
+                state.currentChatId ===
+                chatId
+            ) {
+
+                await createNewChat();
+
+            }
+
+
+            await loadChats();
+
+
+            showToast(
+                "Чат удалён",
+                "success"
+            );
+
+        } catch {
+
+            showToast(
+                "Не удалось удалить чат",
+                "error"
+            );
+
+        }
+
+    }
+
+
+    /* ============================================================
+       ACCOUNT / SETTINGS
+    ============================================================ */
+
+    document
+        .getElementById("accountButton")
+        .addEventListener(
+            "click",
+            openAccountModal
+        );
+
+
+    document
+        .getElementById("settingsButton")
+        .addEventListener(
+            "click",
+            openSettingsModal
+        );
+
+
+    function openAccountModal() {
+
+        const name =
+            state.user?.name ||
+            state.user?.username ||
+            state.user?.email ||
+            "Пользователь";
+
+
+        openModal(
+            "Профиль",
+            "Информация о вашем аккаунте",
+            `
+
+                <div class="form-group">
+
+                    <label class="form-label">
+                        Имя
+                    </label>
+
+                    <input
+                        class="form-input"
+                        value="${escapeAttribute(
+                            name
+                        )}"
+                        disabled
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label class="form-label">
+                        Email
+                    </label>
+
+                    <input
+                        class="form-input"
+                        value="${escapeAttribute(
+                            state.user?.email ||
+                            ""
+                        )}"
+                        disabled
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label class="form-label">
+                        Роль
+                    </label>
+
+                    <input
+                        class="form-input"
+                        value="${
+                            state.user?.is_admin
+                                ? "Администратор"
+                                : "Пользователь"
+                        }"
+                        disabled
+                    >
+
+                </div>
+
+            `
+        );
+
+    }
+
+
+    function openSettingsModal() {
+
+        openModal(
+            "Настройки",
+            "Настройки интерфейса",
+            `
+
+                <div class="form-group">
+
+                    <label class="form-label">
+                        Интерфейс
+                    </label>
+
+                    <select class="form-select">
+                        <option>
+                            Бежевый
+                        </option>
+                    </select>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label class="form-label">
+                        Отправка сообщения
+                    </label>
+
+                    <select class="form-select">
+                        <option>
+                            Enter отправляет сообщение
+                        </option>
+
+                        <option>
+                            Ctrl + Enter отправляет сообщение
+                        </option>
+                    </select>
+
+                </div>
+
+            `
+        );
+
+    }
+
+
+    /* ============================================================
+       MODAL
+    ============================================================ */
+
+    function openModal(
+        title,
+        description,
+        body
+    ) {
+
+        modalTitle.textContent =
+            title;
+
+
+        modalDescription.textContent =
+            description ||
+            "";
+
+
+        modalBody.innerHTML =
+            body;
+
+
+        modalLayer.classList.add(
+            "visible"
+        );
+
+    }
+
+
+    function closeModal() {
+
+        modalLayer.classList.remove(
+            "visible"
+        );
+
+    }
+
+
+    document
+        .getElementById("modalClose")
+        .addEventListener(
+            "click",
+            closeModal
+        );
+
+
+    modalLayer.addEventListener(
+        "click",
+        event => {
+
+            if (
+                event.target ===
+                modalLayer
+            ) {
+
+                closeModal();
+
+            }
+
+        }
+    );
+
+
+    /* ============================================================
+       ADMIN
+    ============================================================ */
+
+    document
+        .getElementById("adminButton")
+        .addEventListener(
+            "click",
+            openAdmin
+        );
+
+
+    document
+        .getElementById("adminClose")
+        .addEventListener(
+            "click",
+            closeAdmin
+        );
+
+
+    function openAdmin() {
+
+        if (
+            !state.user?.is_admin
+        ) {
+
+            showToast(
+                "Недостаточно прав",
+                "error"
+            );
+
+            return;
+
+        }
+
+
+        adminPanel.classList.add(
+            "open"
+        );
+
+
+        overlay.classList.add(
+            "visible"
+        );
+
+
+        loadAdminData();
+
+    }
+
+
+    function closeAdmin() {
+
+        adminPanel.classList.remove(
+            "open"
+        );
+
+
+        overlay.classList.remove(
+            "visible"
+        );
+
+    }
+
+
+    overlay.addEventListener(
+        "click",
+        () => {
+
+            closeAdmin();
+
+        }
+    );
+
+
+    document
+        .querySelectorAll(
+            ".admin-tab"
+        )
+        .forEach(
+            tab => {
+
+                tab.addEventListener(
+                    "click",
+                    () => {
+
+                        document
+                            .querySelectorAll(
+                                ".admin-tab"
+                            )
+                            .forEach(
+                                item =>
+                                    item.classList.remove(
+                                        "active"
+                                    )
+                            );
+
+
+                        document
+                            .querySelectorAll(
+                                ".admin-section"
+                            )
+                            .forEach(
+                                section =>
+                                    section.classList.remove(
+                                        "active"
+                                    )
+                            );
+
+
+                        tab.classList.add(
+                            "active"
+                        );
+
+
+                        const name =
+                            tab.dataset.adminTab;
+
+
+                        const section =
+                            document.getElementById(
+                                "admin" +
+                                capitalize(
+                                    name
+                                )
+                            );
+
+
+                        if (section) {
+
+                            section.classList.add(
+                                "active"
+                            );
+
+                        }
+
+                    }
+                );
+
+            }
+        );
+
+
+    async function loadAdminData() {
+
+        await Promise.all([
+            loadAnalytics(),
+            loadAdminModels(),
+            loadAdminUsers(),
+            loadAdminConnections()
+        ]);
+
+    }
+
+
+    async function loadAnalytics() {
+
+        try {
+
+            const data =
+                await api(
+                    "/api/admin/analytics"
+                );
+
+
+            document
+                .getElementById("statUsers")
+                .textContent =
+                data.users ??
+                data.total_users ??
+                0;
+
+
+            document
+                .getElementById("statChats")
+                .textContent =
+                data.chats ??
+                data.total_chats ??
+                0;
+
+
+            document
+                .getElementById("statMessages")
+                .textContent =
+                data.messages ??
+                data.total_messages ??
+                0;
+
+
+            document
+                .getElementById("statModels")
+                .textContent =
+                data.active_models ??
+                0;
+
+
+            setStatus(
+                "backendStatus",
+                true,
+                "Работает"
+            );
+
+
+            setStatus(
+                "databaseStatus",
+                true,
+                "Доступна"
+            );
+
+        } catch {
+
+            setStatus(
+                "backendStatus",
+                false,
+                "Недоступен"
+            );
+
+
+            setStatus(
+                "databaseStatus",
+                false,
+                "Нет данных"
+            );
+
+        }
+
+    }
+
+
+    async function loadAdminModels() {
+
+        const list =
+            document.getElementById(
+                "adminModelsList"
+            );
+
+
+        try {
+
+            const data =
+                await api(
+                    "/api/admin/models"
+                );
+
+
+            const models =
+                Array.isArray(data)
+                    ? data
+                    : data.models || [];
+
+
+            list.innerHTML = "";
+
+
+            if (!models.length) {
+
+                list.innerHTML = `
+                    <div class="history-empty">
+                        Модели не добавлены
+                    </div>
+                `;
+
+                return;
+
+            }
+
+
+            models.forEach(
+                model => {
+
+                    const item =
+                        document.createElement(
+                            "div"
+                        );
+
+
+                    item.className =
+                        "admin-list-item";
+
+
+                    item.innerHTML = `
+
+                        <div class="admin-list-main">
+
+                            <div class="admin-list-name">
+                                ${escapeHtml(
+                                    model.name ||
+                                    model.id
+                                )}
+                            </div>
+
+                            <div class="admin-list-meta">
+                                ${escapeHtml(
+                                    model.provider ||
+                                    model.base_url ||
+                                    model.id ||
+                                    ""
+                                )}
+                            </div>
+
+                        </div>
+
+
+                        <span
+                            class="status-badge ${
+                                model.enabled === false
+                                    ? "off"
+                                    : ""
+                            }"
+                        >
+
+                            <span class="status-dot"></span>
+
+                            ${
+                                model.enabled === false
+                                    ? "Отключена"
+                                    : "Активна"
+                            }
+
+                        </span>
+
+
+                        <div class="admin-list-actions">
+
+                            <button
+                                class="small-icon"
+                                data-edit-model="${escapeAttribute(
+                                    model.id
+                                )}"
+                                title="Изменить"
+                            >
+
+                                <svg>
+                                    <use href="#icon-edit"></use>
+                                </svg>
+
+                            </button>
+
+                            <button
+                                class="small-icon danger"
+                                data-delete-model="${escapeAttribute(
+                                    model.id
+                                )}"
+                                title="Удалить"
+                            >
+
+                                <svg>
+                                    <use href="#icon-trash"></use>
+                                </svg>
+
+                            </button>
+
+                        </div>
+
+                    `;
+
+
+                    list.appendChild(
+                        item
+                    );
+
+                }
+            );
+
+
+            list
+                .querySelectorAll(
+                    "[data-edit-model]"
+                )
+                .forEach(
+                    button => {
+
+                        button.addEventListener(
+                            "click",
+                            () =>
+                                editModel(
+                                    button.dataset.editModel
+                                )
+                        );
+
+                    }
+                );
+
+
+            list
+                .querySelectorAll(
+                    "[data-delete-model]"
+                )
+                .forEach(
+                    button => {
+
+                        button.addEventListener(
+                            "click",
+                            () =>
+                                deleteModel(
+                                    button.dataset.deleteModel
+                                )
+                        );
+
+                    }
+                );
+
+        } catch {
+
+            list.innerHTML = `
+                <div class="history-empty">
+                    Backend админки ещё не подключён
+                </div>
+            `;
+
+        }
+
+    }
+
+
+    async function loadAdminUsers() {
+
+        const list =
+            document.getElementById(
+                "adminUsersList"
+            );
+
+
+        try {
+
+            const data =
+                await api(
+                    "/api/admin/users"
+                );
+
+
+            const users =
+                Array.isArray(data)
+                    ? data
+                    : data.users || [];
+
+
+            list.innerHTML = "";
+
+
+            if (!users.length) {
+
+                list.innerHTML = `
+                    <div class="history-empty">
+                        Пользователи отсутствуют
+                    </div>
+                `;
+
+                return;
+
+            }
+
+
+            users.forEach(
+                user => {
+
+                    const item =
+                        document.createElement(
+                            "div"
+                        );
+
+
+                    item.className =
+                        "admin-list-item";
+
+
+                    item.innerHTML = `
+
+                        <div class="admin-list-main">
+
+                            <div class="admin-list-name">
+                                ${escapeHtml(
+                                    user.name ||
+                                    user.username ||
+                                    user.email ||
+                                    "Пользователь"
+                                )}
+                            </div>
+
+                            <div class="admin-list-meta">
+                                ${escapeHtml(
+                                    user.email ||
+                                    ""
+                                )}
+                            </div>
+
+                        </div>
+
+
+                        <span class="status-badge">
+
+                            <span class="status-dot"></span>
+
+                            ${
+                                user.is_admin
+                                    ? "Администратор"
+                                    : "Пользователь"
+                            }
+
+                        </span>
+
+                    `;
+
+
+                    list.appendChild(
+                        item
+                    );
+
+                }
+            );
+
+        } catch {
+
+            list.innerHTML = `
+                <div class="history-empty">
+                    Backend пользователей ещё не подключён
+                </div>
+            `;
+
+        }
+
+    }
+
+
+    async function loadAdminConnections() {
+
+        const list =
+            document.getElementById(
+                "adminConnectionsList"
+            );
+
+
+        try {
+
+            const data =
+                await api(
+                    "/api/admin/connections"
+                );
+
+
+            const connections =
+                Array.isArray(data)
+                    ? data
+                    : data.connections || [];
+
+
+            list.innerHTML = "";
+
+
+            if (!connections.length) {
+
+                list.innerHTML = `
+                    <div class="history-empty">
+                        API-подключения не добавлены
+                    </div>
+                `;
+
+                return;
+
+            }
+
+
+            connections.forEach(
+                connection => {
+
+                    const item =
+                        document.createElement(
+                            "div"
+                        );
+
+
+                    item.className =
+                        "admin-list-item";
+
+
+                    item.innerHTML = `
+
+                        <div class="admin-list-main">
+
+                            <div class="admin-list-name">
+                                ${escapeHtml(
+                                    connection.name ||
+                                    connection.provider ||
+                                    "API"
+                                )}
+                            </div>
+
+                            <div class="admin-list-meta">
+                                ${escapeHtml(
+                                    connection.base_url ||
+                                    ""
+                                )}
+                            </div>
+
+                        </div>
+
+
+                        <span class="status-badge">
+
+                            <span class="status-dot"></span>
+
+                            Активно
+
+                        </span>
+
+                    `;
+
+
+                    list.appendChild(
+                        item
+                    );
+
+                }
+            );
+
+        } catch {
+
+            list.innerHTML = `
+                <div class="history-empty">
+                    API-подключения будут загружаться из backend
+                </div>
+            `;
+
+        }
+
+    }
+
+
+    /* ============================================================
+       ADMIN MODEL FORM
+    ============================================================ */
+
+    document
+        .getElementById("addModelButton")
+        .addEventListener(
+            "click",
+            () => openModelForm()
+        );
+
+
+    function openModelForm(
+        existing = null
+    ) {
+
+        openModal(
+            existing
+                ? "Изменить модель"
+                : "Добавить модель",
+
+            "Настройка модели",
+
+            `
+
+                <div class="form-group">
+
+                    <label class="form-label">
+                        Название
+                    </label>
+
+                    <input
+                        id="modelFormName"
+                        class="form-input"
+                        placeholder="Название модели"
+                        value="${escapeAttribute(
+                            existing?.name || ""
+                        )}"
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label class="form-label">
+                        Model ID
+                    </label>
+
+                    <input
+                        id="modelFormId"
+                        class="form-input"
+                        placeholder="Идентификатор модели"
+                        value="${escapeAttribute(
+                            existing?.id || ""
+                        )}"
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label class="form-label">
+                        Base URL
+                    </label>
+
+                    <input
+                        id="modelFormBaseUrl"
+                        class="form-input"
+                        placeholder="Адрес API"
+                        value="${escapeAttribute(
+                            existing?.base_url || ""
+                        )}"
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label class="form-label">
+                        API Key
+                    </label>
+
+                    <input
+                        id="modelFormApiKey"
+                        class="form-input"
+                        type="password"
+                        placeholder="${
+                            existing
+                                ? "Оставьте пустым, чтобы сохранить текущий ключ"
+                                : "API ключ"
+                        }"
+                    >
+
+                    <div class="form-hint">
+                        Ключ хранится только на сервере
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label class="form-label">
+                        Провайдер
+                    </label>
+
+                    <input
+                        id="modelFormProvider"
+                        class="form-input"
+                        placeholder="Название провайдера"
+                        value="${escapeAttribute(
+                            existing?.provider || ""
+                        )}"
+                    >
+
+                </div>
+
+
+                <div class="modal-actions">
+
+                    <button
+                        class="button-secondary"
+                        id="cancelModelForm"
+                    >
+                        Отмена
+                    </button>
+
+                    <button
+                        class="button-primary"
+                        id="saveModelForm"
+                    >
+                        Сохранить
+                    </button>
+
+                </div>
+
+            `
+        );
+
+
+        document
+            .getElementById(
+                "cancelModelForm"
+            )
+            .addEventListener(
+                "click",
+                closeModal
+            );
+
+
+        document
+            .getElementById(
+                "saveModelForm"
+            )
+            .addEventListener(
+                "click",
+                () =>
+                    saveModel(
+                        existing
+                    )
+            );
+
+    }
+
+
+    async function saveModel(
+        existing
+    ) {
+
+        const payload = {
+
+            name:
+                document.getElementById(
+                    "modelFormName"
+                ).value.trim(),
+
+            id:
+                document.getElementById(
+                    "modelFormId"
+                ).value.trim(),
+
+            base_url:
+                document.getElementById(
+                    "modelFormBaseUrl"
+                ).value.trim(),
+
+            provider:
+                document.getElementById(
+                    "modelFormProvider"
+                ).value.trim(),
+
+            api_key:
+                document.getElementById(
+                    "modelFormApiKey"
+                ).value
+
+        };
+
+
+        if (
+            !payload.name ||
+            !payload.id ||
+            !payload.base_url
+        ) {
+
+            showToast(
+                "Заполните обязательные поля",
+                "error"
+            );
+
+            return;
+
+        }
+
+
+        try {
+
+            await api(
+                existing
+                    ? `/api/admin/models/${encodeURIComponent(
+                        existing.id
+                    )}`
+                    : "/api/admin/models",
+
+                {
+                    method:
+                        existing
+                            ? "PATCH"
+                            : "POST",
+
+                    body:
+                        JSON.stringify(
+                            payload
+                        )
+                }
+            );
+
+
+            closeModal();
+
+            await loadModels();
+
+            await loadAdminModels();
+
+
+            showToast(
+                existing
+                    ? "Модель изменена"
+                    : "Модель добавлена",
+                "success"
+            );
+
+        } catch (error) {
+
+            showToast(
+                error.message ||
+                "Не удалось сохранить модель",
+                "error"
+            );
+
+        }
+
+    }
+
+
+    async function editModel(
+        modelId
+    ) {
+
+        try {
+
+            const model =
+                await api(
+                    `/api/admin/models/${encodeURIComponent(
+                        modelId
+                    )}`
+                );
+
+
+            openModelForm(
+                model
+            );
+
+        } catch {
+
+            showToast(
+                "Не удалось загрузить модель",
+                "error"
+            );
+
+        }
+
+    }
+
+
+    async function deleteModel(
+        modelId
+    ) {
+
+        if (
+            !window.confirm(
+                "Удалить эту модель?"
+            )
+        ) {
+
+            return;
+
+        }
+
+
+        try {
+
+            await api(
+                `/api/admin/models/${encodeURIComponent(
+                    modelId
+                )}`,
+                {
+                    method: "DELETE"
+                }
+            );
+
+
+            await loadModels();
+
+            await loadAdminModels();
+
+
+            showToast(
+                "Модель удалена",
+                "success"
+            );
+
+        } catch {
+
+            showToast(
+                "Не удалось удалить модель",
+                "error"
+            );
+
+        }
+
+    }
+
+
+    /* ============================================================
+       API CONNECTION FORM
+    ============================================================ */
+
+    document
+        .getElementById(
+            "addConnectionButton"
+        )
+        .addEventListener(
+            "click",
+            openConnectionForm
+        );
+
+
+    function openConnectionForm() {
+
+        openModal(
+            "Добавить API",
+            "Создание подключения к API-провайдеру",
+            `
+
+                <div class="form-group">
+
+                    <label class="form-label">
+                        Название
+                    </label>
+
+                    <input
+                        id="connectionName"
+                        class="form-input"
+                        placeholder="Например, Основной API"
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label class="form-label">
+                        Base URL
+                    </label>
+
+                    <input
+                        id="connectionBaseUrl"
+                        class="form-input"
+                        placeholder="Адрес API"
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label class="form-label">
+                        API Key
+                    </label>
+
+                    <input
+                        id="connectionApiKey"
+                        class="form-input"
+                        type="password"
+                        placeholder="API ключ"
+                    >
+
+                </div>
+
+
+                <div class="modal-actions">
+
+                    <button
+                        class="button-secondary"
+                        id="cancelConnection"
+                    >
+                        Отмена
+                    </button>
+
+                    <button
+                        class="button-primary"
+                        id="saveConnection"
+                    >
+                        Сохранить
+                    </button>
+
+                </div>
+
+            `
+        );
+
+
+        document
+            .getElementById(
+                "cancelConnection"
+            )
+            .addEventListener(
+                "click",
+                closeModal
+            );
+
+
+        document
+            .getElementById(
+                "saveConnection"
+            )
+            .addEventListener(
+                "click",
+                async () => {
+
+                    const payload = {
+
+                        name:
+                            document.getElementById(
+                                "connectionName"
+                            ).value.trim(),
+
+                        base_url:
+                            document.getElementById(
+                                "connectionBaseUrl"
+                            ).value.trim(),
+
+                        api_key:
+                            document.getElementById(
+                                "connectionApiKey"
+                            ).value
+
+                    };
+
+
+                    try {
+
+                        await api(
+                            "/api/admin/connections",
+                            {
+                                method: "POST",
+
+                                body:
+                                    JSON.stringify(
+                                        payload
+                                    )
+                            }
+                        );
+
+
+                        closeModal();
+
+                        await loadAdminConnections();
+
+
+                        showToast(
+                            "API подключение добавлено",
+                            "success"
+                        );
+
+                    } catch (error) {
+
+                        showToast(
+                            error.message ||
+                            "Не удалось добавить API",
+                            "error"
+                        );
+
+                    }
+
+                }
+            );
+
+    }
+
+
+    /* ============================================================
+       MOBILE SIDEBAR
+    ============================================================ */
+
+    document
+        .getElementById(
+            "mobileMenuButton"
+        )
         .addEventListener(
             "click",
             () => {
@@ -1560,35 +6335,317 @@
                     "mobile-open"
                 );
 
+
+                if (
+                    sidebar.classList.contains(
+                        "mobile-open"
+                    )
+                ) {
+
+                    overlay.classList.add(
+                        "visible"
+                    );
+
+                } else {
+
+                    overlay.classList.remove(
+                        "visible"
+                    );
+
+                }
+
             }
         );
 
 
-    /*
-     * ==========================================
-     * HTML ESCAPE
-     * ==========================================
-     */
+    function closeMobileSidebar() {
 
-    function escapeHtml(value) {
-
-        return String(value)
-            .replaceAll("&", "&amp;")
-            .replaceAll("<", "&lt;")
-            .replaceAll(">", "&gt;")
-            .replaceAll('"', "&quot;")
-            .replaceAll("'", "&#039;");
+        sidebar.classList.remove(
+            "mobile-open"
+        );
 
     }
 
 
-    /*
-     * ==========================================
-     * START
-     * ==========================================
-     */
+    /* ============================================================
+       HELPERS
+    ============================================================ */
 
-    loadModels();
+    function scrollMessagesToBottom() {
+
+        requestAnimationFrame(
+            () => {
+
+                messages.scrollTop =
+                    messages.scrollHeight;
+
+            }
+        );
+
+    }
+
+
+    function generateChatTitle(
+        text
+    ) {
+
+        const cleaned =
+            text
+                .replace(
+                    /\s+/g,
+                    " "
+                )
+                .trim();
+
+
+        if (
+            cleaned.length <= 45
+        ) {
+
+            return cleaned;
+
+        }
+
+
+        return (
+            cleaned.slice(
+                0,
+                45
+            ) +
+            "..."
+        );
+
+    }
+
+
+    function getDateCategory(
+        value
+    ) {
+
+        if (!value) {
+            return "older";
+        }
+
+
+        const date =
+            new Date(
+                value
+            );
+
+
+        if (
+            Number.isNaN(
+                date.getTime()
+            )
+        ) {
+
+            return "older";
+
+        }
+
+
+        const now =
+            new Date();
+
+
+        const today =
+            new Date(
+                now.getFullYear(),
+                now.getMonth(),
+                now.getDate()
+            );
+
+
+        const target =
+            new Date(
+                date.getFullYear(),
+                date.getMonth(),
+                date.getDate()
+            );
+
+
+        const difference =
+            Math.round(
+                (
+                    today -
+                    target
+                ) /
+                86400000
+            );
+
+
+        if (
+            difference === 0
+        ) {
+
+            return "today";
+
+        }
+
+
+        if (
+            difference === 1
+        ) {
+
+            return "yesterday";
+
+        }
+
+
+        return "older";
+
+    }
+
+
+    function capitalize(
+        value
+    ) {
+
+        return (
+            value.charAt(0)
+                .toUpperCase() +
+            value.slice(1)
+        );
+
+    }
+
+
+    function escapeHtml(
+        value
+    ) {
+
+        return String(
+            value ?? ""
+        )
+            .replaceAll(
+                "&",
+                "&amp;"
+            )
+            .replaceAll(
+                "<",
+                "&lt;"
+            )
+            .replaceAll(
+                ">",
+                "&gt;"
+            )
+            .replaceAll(
+                '"',
+                "&quot;"
+            )
+            .replaceAll(
+                "'",
+                "&#039;"
+            );
+
+    }
+
+
+    function escapeAttribute(
+        value
+    ) {
+
+        return escapeHtml(
+            value
+        );
+
+    }
+
+
+    function showToast(
+        message,
+        type = ""
+    ) {
+
+        const container =
+            document.getElementById(
+                "toastContainer"
+            );
+
+
+        const toast =
+            document.createElement(
+                "div"
+            );
+
+
+        toast.className =
+            `toast ${type}`;
+
+
+        toast.textContent =
+            message;
+
+
+        container.appendChild(
+            toast
+        );
+
+
+        setTimeout(
+            () => {
+
+                toast.remove();
+
+            },
+            3200
+        );
+
+    }
+
+
+    function setStatus(
+        id,
+        success,
+        text
+    ) {
+
+        const element =
+            document.getElementById(
+                id
+            );
+
+
+        if (!element) {
+            return;
+        }
+
+
+        element.classList.toggle(
+            "off",
+            !success
+        );
+
+
+        element.innerHTML = `
+
+            <span class="status-dot"></span>
+
+            ${escapeHtml(text)}
+
+        `;
+
+    }
+
+
+    /* ============================================================
+       START
+    ============================================================ */
+
+    async function init() {
+
+        await loadUser();
+
+        await loadModels();
+
+        await loadChats();
+
+        updateSendButton();
+
+    }
+
+
+    init();
 
 </script>
 
