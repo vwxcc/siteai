@@ -5532,7 +5532,7 @@
                     <input
                         class="form-input"
                         value="${
-                            state.user?.is_admin
+                            state.user?.role === "admin"
                                 ? "Администратор"
                                 : "Пользователь"
                         }"
@@ -5680,7 +5680,7 @@
     function openAdmin() {
 
         if (
-            !state.user?.is_admin
+            !state.user?.role === "admin"
         ) {
 
             showToast(
@@ -6151,7 +6151,7 @@
                             <span class="status-dot"></span>
 
                             ${
-                                user.is_admin
+                                user.role === "admin"
                                     ? "Администратор"
                                     : "Пользователь"
                             }
