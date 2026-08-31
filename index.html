@@ -2140,10 +2140,234 @@
                 display: none;
             }
         }
-    </style>
+    
+        /* =========================================================
+           AUTH
+        ========================================================= */
+
+        .auth-screen {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            background: var(--background);
+        }
+
+        .auth-card {
+            width: min(420px, calc(100vw - 36px));
+
+            padding: 38px;
+
+            background: var(--surface);
+
+            border: 1px solid var(--border);
+
+            border-radius: 24px;
+
+            box-shadow: var(--shadow-large);
+        }
+
+        .auth-logo {
+            width: 48px;
+            height: 48px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            margin-bottom: 24px;
+
+            border-radius: 14px;
+
+            background: var(--text);
+            color: var(--background);
+
+            font-family: "Yandex Display", Arial, sans-serif;
+            font-size: 18px;
+        }
+
+        .auth-card h1 {
+            margin: 0 0 8px;
+
+            font-size: 30px;
+            line-height: 1.1;
+        }
+
+        .auth-card > p {
+            margin: 0 0 28px;
+
+            color: var(--text-secondary);
+
+            line-height: 1.5;
+        }
+
+        .auth-field {
+            margin-bottom: 17px;
+        }
+
+        .auth-field label {
+            display: block;
+
+            margin-bottom: 7px;
+
+            color: var(--text-secondary);
+
+            font-size: 13px;
+        }
+
+        .auth-field input {
+            width: 100%;
+            height: 48px;
+
+            padding: 0 14px;
+
+            border: 1px solid var(--border);
+            border-radius: 12px;
+
+            outline: none;
+
+            background: var(--background);
+            color: var(--text);
+
+            font-size: 14px;
+
+            transition: border-color .15s, box-shadow .15s;
+        }
+
+        .auth-field input:focus {
+            border-color: var(--accent);
+
+            box-shadow:
+                0 0 0 3px rgba(217, 119, 87, .12);
+        }
+
+        .auth-submit {
+            width: 100%;
+            height: 48px;
+
+            margin-top: 6px;
+
+            border-radius: 12px;
+
+            background: var(--text);
+            color: var(--background);
+
+            font-family: "Yandex Display", Arial, sans-serif;
+            font-size: 15px;
+
+            transition: transform .15s, opacity .15s;
+        }
+
+        .auth-submit:hover {
+            transform: translateY(-1px);
+            opacity: .9;
+        }
+
+        .auth-switch {
+            width: 100%;
+
+            margin-top: 16px;
+
+            padding: 8px;
+
+            background: transparent;
+            color: var(--text-secondary);
+
+            font-size: 13px;
+        }
+
+        .auth-switch:hover {
+            color: var(--text);
+        }
+
+        .auth-error {
+            margin: 4px 0 12px;
+            padding: 10px 12px;
+
+            border-radius: 10px;
+
+            background: rgba(189, 85, 72, .08);
+            color: var(--danger);
+
+            font-size: 13px;
+        }
+
+</style>
 </head>
 
 <body>
+<div id="authScreen" class="auth-screen">
+    <div class="auth-card">
+
+        <div class="auth-logo">AI</div>
+
+        <h1 id="authTitle" class="display-font">Добро пожаловать</h1>
+
+        <p id="authSubtitle">
+            Войдите, чтобы продолжить
+        </p>
+
+        <form id="authForm">
+
+            <div id="usernameField" class="auth-field hidden">
+                <label>Имя пользователя</label>
+                <input
+                    id="authUsername"
+                    type="text"
+                    autocomplete="username"
+                    placeholder="Введите имя"
+                >
+            </div>
+
+            <div class="auth-field">
+                <label>Email</label>
+                <input
+                    id="authEmail"
+                    type="email"
+                    autocomplete="email"
+                    placeholder="Введите email"
+                    required
+                >
+            </div>
+
+            <div class="auth-field">
+                <label>Пароль</label>
+                <input
+                    id="authPassword"
+                    type="password"
+                    autocomplete="current-password"
+                    placeholder="Введите пароль"
+                    required
+                >
+            </div>
+
+            <div id="authError" class="auth-error hidden"></div>
+
+            <button
+                id="authSubmit"
+                class="auth-submit"
+                type="submit"
+            >
+                Войти
+            </button>
+
+        </form>
+
+        <button
+            id="authSwitch"
+            class="auth-switch"
+            type="button"
+        >
+            Создать аккаунт
+        </button>
+
+    </div>
+</div>
+
 
 <!-- =============================================================
      SVG ICON DEFINITIONS
@@ -3319,6 +3543,9 @@
         options = {}
     ) {
 
+        const token =
+            localStorage.getItem("siteai_token");
+
         const response =
             await fetch(
                 url,
@@ -3327,6 +3554,12 @@
                     ...options,
                     headers: {
                         "Content-Type": "application/json",
+                        ...(token
+                            ? {
+                                "Authorization":
+                                    `Bearer ${token}`
+                            }
+                            : {}),
                         ...(options.headers || {})
                     }
                 }
@@ -3386,6 +3619,254 @@
 
 
         return response;
+
+    }
+
+
+
+    /* ============================================================
+       AUTHENTICATION
+    ============================================================ */
+
+    let authRegisterMode = false;
+
+    const authScreen =
+        document.getElementById("authScreen");
+
+    const authForm =
+        document.getElementById("authForm");
+
+    const authTitle =
+        document.getElementById("authTitle");
+
+    const authSubtitle =
+        document.getElementById("authSubtitle");
+
+    const authUsername =
+        document.getElementById("authUsername");
+
+    const usernameField =
+        document.getElementById("usernameField");
+
+    const authEmail =
+        document.getElementById("authEmail");
+
+    const authPassword =
+        document.getElementById("authPassword");
+
+    const authSubmit =
+        document.getElementById("authSubmit");
+
+    const authSwitch =
+        document.getElementById("authSwitch");
+
+    const authError =
+        document.getElementById("authError");
+
+
+    function showAuthError(message) {
+
+        authError.textContent = message;
+
+        authError.classList.remove("hidden");
+
+    }
+
+
+    function clearAuthError() {
+
+        authError.textContent = "";
+
+        authError.classList.add("hidden");
+
+    }
+
+
+    function updateAuthMode() {
+
+        clearAuthError();
+
+        authRegisterMode =
+            !authRegisterMode;
+
+        usernameField.classList.toggle(
+            "hidden",
+            !authRegisterMode
+        );
+
+        if (authRegisterMode) {
+
+            authTitle.textContent =
+                "Создать аккаунт";
+
+            authSubtitle.textContent =
+                "Зарегистрируйтесь, чтобы продолжить";
+
+            authSubmit.textContent =
+                "Зарегистрироваться";
+
+            authSwitch.textContent =
+                "Уже есть аккаунт";
+
+            authPassword.autocomplete =
+                "new-password";
+
+        } else {
+
+            authTitle.textContent =
+                "Добро пожаловать";
+
+            authSubtitle.textContent =
+                "Войдите, чтобы продолжить";
+
+            authSubmit.textContent =
+                "Войти";
+
+            authSwitch.textContent =
+                "Создать аккаунт";
+
+            authPassword.autocomplete =
+                "current-password";
+
+        }
+
+    }
+
+
+    authSwitch.addEventListener(
+        "click",
+        updateAuthMode
+    );
+
+
+    authForm.addEventListener(
+        "submit",
+        async (event) => {
+
+            event.preventDefault();
+
+            clearAuthError();
+
+            authSubmit.disabled = true;
+
+            try {
+
+                const endpoint =
+                    authRegisterMode
+                        ? "/api/auth/register"
+                        : "/api/auth/login";
+
+                const body =
+                    authRegisterMode
+                        ? {
+                            username:
+                                authUsername.value.trim(),
+                            email:
+                                authEmail.value.trim(),
+                            password:
+                                authPassword.value
+                        }
+                        : {
+                            email:
+                                authEmail.value.trim(),
+                            password:
+                                authPassword.value
+                        };
+
+                const response =
+                    await fetch(
+                        endpoint,
+                        {
+                            method: "POST",
+
+                            headers: {
+                                "Content-Type":
+                                    "application/json"
+                            },
+
+                            body:
+                                JSON.stringify(body)
+                        }
+                    );
+
+                const data =
+                    await response.json();
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        data.error ||
+                        "Ошибка авторизации"
+                    );
+
+                }
+
+                if (!data.token) {
+
+                    throw new Error(
+                        "Сервер не вернул токен"
+                    );
+
+                }
+
+                localStorage.setItem(
+                    "siteai_token",
+                    data.token
+                );
+
+                state.user =
+                    data.user;
+
+                authScreen.classList.add(
+                    "hidden"
+                );
+
+                renderUser();
+
+                await loadModels();
+
+                await loadChats();
+
+                updateSendButton();
+
+                authForm.reset();
+
+            } catch (error) {
+
+                showAuthError(
+                    error.message ||
+                    "Ошибка авторизации"
+                );
+
+            } finally {
+
+                authSubmit.disabled = false;
+
+            }
+
+        }
+    );
+
+
+    function logout() {
+
+        localStorage.removeItem(
+            "siteai_token"
+        );
+
+        state.user = null;
+
+        authScreen.classList.remove(
+            "hidden"
+        );
+
+        authRegisterMode = true;
+
+        updateAuthMode();
+
+        authRegisterMode = false;
+
+        updateAuthMode();
 
     }
 

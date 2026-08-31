@@ -1,0 +1,27 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: siteai-backend
+    restart: unless-stopped
+    expose:
+      - "3051"
+    env_file:
+      - ./backend/.env
+    volumes:
+      - ./backend/database/data:/app/backend/database/data
+
+  nginx:
+    image: nginx:alpine
+    container_name: siteai
+    restart: unless-stopped
+    ports:
+      - "3050:80"
+    volumes:
+      - ./index.html:/usr/share/nginx/html/index.html:ro
+      - ./YandexSansDisplay-Bold.ttf:/usr/share/nginx/html/YandexSansDisplay-Bold.ttf:ro
+      - ./YandexSansText-Regular.ttf:/usr/share/nginx/html/YandexSansText-Regular.ttf:ro
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - backend
