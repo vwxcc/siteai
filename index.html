@@ -5049,6 +5049,7 @@
 
 
             const answer =
+                response.assistant_message?.content ||
                 response.content ||
                 response.message ||
                 response.answer ||
