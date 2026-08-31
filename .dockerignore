@@ -1,0 +1,6 @@
+backend/node_modules
+backend/database/data
+.git
+.gitignore
+*.backup
+index.html.before-*
