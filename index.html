@@ -3942,7 +3942,7 @@
         document
             .getElementById("sidebarUserRole")
             .textContent =
-            state.user.is_admin
+            state.user.role === "admin"
                 ? "Администратор"
                 : "Пользователь";
 
@@ -3951,7 +3951,7 @@
             .getElementById("adminButton")
             .classList.toggle(
                 "hidden",
-                !state.user.is_admin
+                state.user.role !== "admin"
             );
 
     }
