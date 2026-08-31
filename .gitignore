@@ -1,0 +1,5 @@
+backend/.env
+backend/database/data/
+.git_ssh
+.git_ssh.pub
+node_modules/
