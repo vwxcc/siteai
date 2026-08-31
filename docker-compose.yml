@@ -5,8 +5,8 @@ services:
       dockerfile: Dockerfile
     container_name: siteai-backend
     restart: unless-stopped
-    expose:
-      - "3051"
+    ports:
+      - "127.0.0.1:3051:3051"
     env_file:
       - ./backend/.env
     volumes:
